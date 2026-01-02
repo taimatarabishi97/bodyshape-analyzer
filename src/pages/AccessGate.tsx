@@ -81,7 +81,7 @@ export default function AccessGate() {
         sessionStorage.setItem('user_email', accessToken.email);
         sessionStorage.setItem('service_tier', accessToken.tier);
 
-        toast.success('Access granted! Let\\'s get started...');
+        toast.success('Access granted! Let\'s get started...');
         navigate('/questionnaire');
       } else {
         // Validate email (check if they have a paid purchase)
@@ -114,7 +114,7 @@ export default function AccessGate() {
         sessionStorage.setItem('user_email', validToken.email);
         sessionStorage.setItem('service_tier', validToken.tier);
 
-        toast.success('Access granted! Let\\'s get started...');
+        toast.success('Access granted! Let\'s get started...');
         navigate('/questionnaire');
       }
     } catch (error) {

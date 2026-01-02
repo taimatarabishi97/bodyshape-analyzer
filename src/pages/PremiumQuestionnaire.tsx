@@ -254,7 +254,7 @@ export default function PremiumQuestionnaire() {
       sessionStorage.setItem('questionnaireAnswers', JSON.stringify(answers));
       sessionStorage.setItem('questionnaireNotes', notes);
 
-      toast.success('Great! Now choose how you\\'d like to analyze your body shape.');
+      toast.success('Great! Now choose how you would like to analyze your body shape.');
       
       // Navigate to method selection
       navigate('/method');
