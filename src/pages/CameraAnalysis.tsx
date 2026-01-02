@@ -7,7 +7,7 @@ import { ResultsDisplay } from '@/components/camera/ResultsDisplay';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Camera, AlertCircle, ArrowLeft, CheckCircle, Ruler } from 'lucide-react';
+import { Camera, AlertCircle, ArrowLeft, CheckCircle } from 'lucide-react';
 import { BodyShapeResult } from '@/types/camera';
 
 // Main component that uses camera context
@@ -89,6 +89,25 @@ function CameraAnalysisContent() {
   };
 
   const handleUseResult = (result: BodyShapeResult) => {
+    // Get questionnaire preferences from sessionStorage
+    const storedAnswers = sessionStorage.getItem('questionnaireAnswers');
+    const storedNotes = sessionStorage.getItem('questionnaireNotes');
+    
+    let stylePreferences = {};
+    if (storedAnswers) {
+      try {
+        const answers = JSON.parse(storedAnswers);
+        stylePreferences = {
+          goal: answers.goal,
+          styleVibe: answers.styleVibe,
+          fitPreference: answers.fitPreference,
+          occasions: answers.occasions,
+        };
+      } catch (e) {
+        console.error('Error parsing questionnaire answers:', e);
+      }
+    }
+
     // Navigate to results page with the analysis result
     const resultsData = {
       shape: result.shape,
@@ -96,6 +115,8 @@ function CameraAnalysisContent() {
       measurements: result.measurements,
       timestamp: new Date().toISOString(),
       method: 'camera' as const,
+      stylePreferences,
+      notes: storedNotes || '',
     };
     
     // Save to localStorage for persistence
@@ -103,10 +124,6 @@ function CameraAnalysisContent() {
     
     // Navigate to results page
     navigate('/results', { state: resultsData });
-  };
-
-  const handleManualEntry = () => {
-    navigate('/manual');
   };
 
   // Render based on current state
@@ -117,7 +134,6 @@ function CameraAnalysisContent() {
           result={analysisResult}
           onRetry={handleRetry}
           onUseResult={handleUseResult}
-          onManualEntry={handleManualEntry}
         />
       );
     }
@@ -256,21 +272,21 @@ function CameraAnalysisContent() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600 mb-2">📱</div>
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
+                  <div className="text-2xl font-bold text-purple-600 mb-2">📱</div>
                   <h4 className="font-medium mb-1">Device</h4>
                   <p className="text-sm text-muted-foreground">
                     Smartphone, tablet, or computer with camera
                   </p>
                 </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600 mb-2">💡</div>
+                <div className="text-center p-4 bg-pink-50 rounded-lg">
+                  <div className="text-2xl font-bold text-pink-600 mb-2">💡</div>
                   <h4 className="font-medium mb-1">Lighting</h4>
                   <p className="text-sm text-muted-foreground">
                     Well-lit area without harsh shadows
                   </p>
                 </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                <div className="text-center p-4 bg-purple-50 rounded-lg">
                   <div className="text-2xl font-bold text-purple-600 mb-2">👕</div>
                   <h4 className="font-medium mb-1">Clothing</h4>
                   <p className="text-sm text-muted-foreground">
@@ -281,56 +297,12 @@ function CameraAnalysisContent() {
             </CardContent>
           </Card>
 
-          {/* Manual Fallback Card */}
-          <Card className="mb-8 border-dashed border-2">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Ruler className="w-5 h-5 mr-2" />
-                Alternative: Manual Measurements
-              </CardTitle>
-              <CardDescription>
-                Don't have a camera or prefer to enter measurements manually?
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex-1">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Enter your bust, waist, and hip measurements manually. We'll use the same body shape classification logic.
-                  </p>
-                  <ul className="text-sm space-y-1">
-                    <li className="flex items-center">
-                      <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
-                      Same accurate classification as camera analysis
-                    </li>
-                    <li className="flex items-center">
-                      <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
-                      No camera required
-                    </li>
-                    <li className="flex items-center">
-                      <CheckCircle className="w-3 h-3 text-green-500 mr-2 flex-shrink-0" />
-                      Perfect for low-light conditions
-                    </li>
-                  </ul>
-                </div>
-                <Button
-                  onClick={handleManualEntry}
-                  variant="outline"
-                  className="whitespace-nowrap"
-                >
-                  <Ruler className="w-4 h-4 mr-2" />
-                  Enter Measurements Manually
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-
           {/* Start button */}
           <div className="text-center">
             <Button
               onClick={() => setShowConsent(true)}
               size="lg"
-              className="bg-blue-600 hover:bg-blue-700 px-8"
+              className="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 px-8"
             >
               <Camera className="w-5 h-5 mr-2" />
               Start Camera Analysis
@@ -347,12 +319,11 @@ function CameraAnalysisContent() {
 
   return (
     <>
-      {/* Consent Modal - Updated to include manual option */}
+      {/* Consent Modal */}
       <CameraConsentModal
         isOpen={showConsent}
         onClose={() => setShowConsent(false)}
         onGrantPermission={handleGrantPermission}
-        onManualEntry={handleManualEntry}
         isLoading={state.status === 'REQUESTING_PERMISSION'}
       />
 

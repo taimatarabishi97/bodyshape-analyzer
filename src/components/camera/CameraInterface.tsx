@@ -1,8 +1,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Camera, RotateCw, AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Camera, SwitchCamera, AlertCircle, CheckCircle, XCircle, X } from 'lucide-react';
 import { useCamera } from '@/contexts/CameraContext';
 import { PoseOverlay } from './PoseOverlay';
 import { QualityIndicator } from './QualityIndicator';
@@ -151,30 +150,33 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
 
   const getStatusIcon = () => {
     if (countdown !== null) {
-      return <AlertCircle className="w-5 h-5 text-amber-500" />;
+      return <AlertCircle className="w-4 h-4 text-amber-400" />;
     }
     
     if (poseReady) {
-      return <CheckCircle className="w-5 h-5 text-green-500" />;
+      return <CheckCircle className="w-4 h-4 text-green-400" />;
     }
     
     if (state.landmarks && state.landmarks.length > 0) {
-      return <AlertCircle className="w-5 h-5 text-amber-500" />;
+      return <AlertCircle className="w-4 h-4 text-amber-400" />;
     }
     
-    return <XCircle className="w-5 h-5 text-gray-400" />;
+    return <XCircle className="w-4 h-4 text-white/50" />;
   };
 
+  // Check if mobile
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
   return (
-    <div className="relative flex flex-col items-center justify-center min-h-screen bg-gray-900 p-4">
-      {/* Camera preview */}
-      <div className="relative w-full max-w-2xl aspect-[3/4] sm:aspect-video bg-black rounded-lg overflow-hidden">
+    <div className="fixed inset-0 bg-black flex flex-col">
+      {/* Camera preview - full screen on mobile */}
+      <div className="relative flex-1 w-full overflow-hidden">
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
-          className="w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover"
           style={{
             transform: state.currentCamera === 'front' ? 'scaleX(-1)' : 'none'
           }}
@@ -190,92 +192,102 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
         
         {/* Hidden canvas for capture */}
         <canvas ref={canvasRef} className="hidden" />
-      </div>
 
-      {/* Quality indicator */}
-      {state.quality && (
-        <div className="mt-4 w-full max-w-2xl">
-          <QualityIndicator quality={state.quality} />
-        </div>
-      )}
-
-      {/* Status card */}
-      <Card className="mt-4 w-full max-w-2xl">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              {getStatusIcon()}
-              <div>
-                <h3 className="font-medium">Status</h3>
-                <p className="text-sm text-muted-foreground">{getStatusMessage()}</p>
-              </div>
-            </div>
-            
-            <div className="text-right">
-              <p className="text-sm font-medium">
-                {state.quality ? `${Math.round(state.quality.overall * 100)}% Quality` : '--'}
-              </p>
-              {state.quality && (
-                <Progress value={state.quality.overall * 100} className="w-32 mt-1" />
-              )}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Guidance card */}
-      <Card className="mt-4 w-full max-w-2xl">
-        <CardContent className="pt-6">
-          <h3 className="font-medium mb-2">Guidelines for Best Results</h3>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>• Stand about 6 feet (2 meters) from the camera</li>
-            <li>• Face the camera directly with arms at your sides</li>
-            <li>• Wear form-fitting clothing for better detection</li>
-            <li>• Ensure good lighting without shadows</li>
-            <li>• Keep your full body in the frame</li>
-          </ul>
-        </CardContent>
-      </Card>
-
-      {/* Control buttons */}
-      <div className="mt-6 flex flex-col sm:flex-row gap-3 w-full max-w-2xl">
-        <Button
-          variant="outline"
-          onClick={handleCancel}
-          className="flex-1"
-          disabled={countdown !== null}
-        >
-          Cancel
-        </Button>
-        
-        {onSwitchCamera && (
+        {/* Top controls overlay */}
+        <div className="absolute top-0 left-0 right-0 p-4 flex justify-between items-start z-10 safe-area-pt">
+          {/* Cancel button */}
           <Button
-            variant="outline"
-            onClick={onSwitchCamera}
-            className="flex-1"
+            variant="ghost"
+            size="icon"
+            onClick={handleCancel}
+            className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-full w-12 h-12"
             disabled={countdown !== null}
           >
-            <RotateCw className="w-4 h-4 mr-2" />
-            Switch Camera
+            <X className="w-6 h-6" />
           </Button>
+
+          {/* Switch camera button - more prominent */}
+          {onSwitchCamera && (
+            <Button
+              onClick={onSwitchCamera}
+              className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white rounded-full px-4 py-2 flex items-center gap-2"
+              disabled={countdown !== null}
+            >
+              <SwitchCamera className="w-5 h-5" />
+              <span className="text-sm font-medium">Flip</span>
+            </Button>
+          )}
+        </div>
+
+        {/* Status overlay - at top center */}
+        <div className="absolute top-20 left-0 right-0 flex justify-center z-10">
+          <div className="bg-white/20 backdrop-blur-sm rounded-full px-4 py-2 flex items-center gap-2">
+            {getStatusIcon()}
+            <span className="text-white text-sm font-medium">{getStatusMessage()}</span>
+          </div>
+        </div>
+
+        {/* Countdown overlay */}
+        {countdown !== null && (
+          <div className="absolute inset-0 flex items-center justify-center z-20">
+            <div className="text-9xl font-bold text-white drop-shadow-lg animate-pulse">
+              {countdown}
+            </div>
+          </div>
         )}
-        
-        <Button
-          onClick={handleCapture}
-          className="flex-1 bg-blue-600 hover:bg-blue-700"
-          disabled={!poseReady || countdown !== null}
-        >
-          <Camera className="w-4 h-4 mr-2" />
-          {countdown !== null ? `Capturing... (${countdown})` : 'Capture'}
-        </Button>
+
+        {/* Quality indicator on the side */}
+        {state.quality && (
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 z-10">
+            <div className="bg-white/20 backdrop-blur-sm rounded-lg p-2">
+              <div className="text-white text-xs font-medium text-center mb-1">
+                {Math.round(state.quality.overall * 100)}%
+              </div>
+              <div className="w-2 h-24 bg-white/30 rounded-full overflow-hidden">
+                <div 
+                  className="w-full bg-green-400 rounded-full transition-all duration-300"
+                  style={{ height: `${state.quality.overall * 100}%`, marginTop: `${100 - state.quality.overall * 100}%` }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Bottom controls */}
+      <div className="bg-black/80 backdrop-blur-sm p-4 pb-8 safe-area-pb">
+        {/* Guidelines - compact for mobile */}
+        <div className="text-white/70 text-xs text-center mb-4 space-y-1">
+          <p>Stand 6ft back • Arms at sides • Full body in frame</p>
+        </div>
+
+        {/* Capture button */}
+        <div className="flex justify-center">
+          <Button
+            onClick={handleCapture}
+            className={`w-20 h-20 rounded-full ${poseReady ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700' : 'bg-gray-600'} transition-all duration-300 ${poseReady ? 'scale-100' : 'scale-95'}`}
+            disabled={!poseReady || countdown !== null}
+          >
+            <Camera className="w-8 h-8 text-white" />
+          </Button>
+        </div>
+
+        {/* Ready status */}
+        <div className="text-center mt-3">
+          {poseReady ? (
+            <span className="text-green-400 text-sm font-medium">✓ Ready to capture</span>
+          ) : (
+            <span className="text-white/50 text-sm">Position yourself in frame</span>
+          )}
+        </div>
       </div>
 
       {/* Error display */}
       {state.error && (
-        <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-lg w-full max-w-2xl">
+        <div className="absolute bottom-32 left-4 right-4 p-3 bg-red-500/90 backdrop-blur-sm rounded-lg z-20">
           <div className="flex items-center">
-            <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
-            <p className="text-sm text-red-800">{state.error}</p>
+            <AlertCircle className="w-5 h-5 text-white mr-2 flex-shrink-0" />
+            <p className="text-sm text-white">{state.error}</p>
           </div>
         </div>
       )}

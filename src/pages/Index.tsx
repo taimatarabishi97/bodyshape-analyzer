@@ -18,10 +18,10 @@ export default function Index() {
       return;
     }
 
-    // In BASIC_MODE, go to method selection (camera or questionnaire)
+    // In BASIC_MODE, go to questionnaire first
     // In FULL_MODE, go to access gate first
     if (isBasicMode) {
-      navigate('/method');
+      navigate('/questionnaire');
     } else {
       navigate('/access');
     }

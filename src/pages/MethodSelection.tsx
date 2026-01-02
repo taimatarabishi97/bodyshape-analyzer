@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Camera, ClipboardList, ArrowLeft, Sparkles, Shield, Zap } from 'lucide-react';
+import { Camera, Ruler, ArrowLeft, Sparkles, Shield, Zap } from 'lucide-react';
 
 export default function MethodSelection() {
   const navigate = useNavigate();
@@ -16,7 +16,7 @@ export default function MethodSelection() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => navigate('/')}
+                onClick={() => navigate('/questionnaire')}
                 className="mr-2"
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -92,24 +92,24 @@ export default function MethodSelection() {
               </CardContent>
             </Card>
 
-            {/* Manual Questionnaire Card */}
+            {/* Manual Measurements Card */}
             <Card className="border-0 shadow-xl hover:shadow-2xl transition-all duration-300 cursor-pointer group relative overflow-hidden"
-                  onClick={() => navigate('/questionnaire')}>
+                  onClick={() => navigate('/manual')}>
               <div className="absolute inset-0 bg-gradient-to-br from-purple-600/5 to-pink-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="text-center pb-4">
                 <div className="w-20 h-20 bg-gradient-to-br from-pink-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                  <ClipboardList className="w-10 h-10 text-pink-600" />
+                  <Ruler className="w-10 h-10 text-pink-600" />
                 </div>
-                <CardTitle className="text-2xl">Questionnaire</CardTitle>
+                <CardTitle className="text-2xl">Manual Measurements</CardTitle>
                 <CardDescription className="text-base">
-                  Answer questions about your body
+                  Enter your body measurements
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-3">
                   <div className="flex items-start gap-3">
-                    <ClipboardList className="w-5 h-5 text-pink-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-gray-600">Simple questions about your proportions</p>
+                    <Ruler className="w-5 h-5 text-pink-600 flex-shrink-0 mt-0.5" />
+                    <p className="text-sm text-gray-600">Enter bust, waist, and hip measurements</p>
                   </div>
                   <div className="flex items-start gap-3">
                     <Shield className="w-5 h-5 text-pink-600 flex-shrink-0 mt-0.5" />
@@ -117,7 +117,7 @@ export default function MethodSelection() {
                   </div>
                   <div className="flex items-start gap-3">
                     <Sparkles className="w-5 h-5 text-pink-600 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-gray-600">Optional measurements for better accuracy</p>
+                    <p className="text-sm text-gray-600">Most accurate if you know your measurements</p>
                   </div>
                 </div>
                 
@@ -126,12 +126,12 @@ export default function MethodSelection() {
                   className="w-full border-2 border-pink-600 text-pink-600 hover:bg-pink-50 mt-4"
                   size="lg"
                 >
-                  <ClipboardList className="w-5 h-5 mr-2" />
-                  Start Questionnaire
+                  <Ruler className="w-5 h-5 mr-2" />
+                  Enter Measurements
                 </Button>
                 
                 <p className="text-xs text-center text-gray-500">
-                  Takes about 2-3 minutes
+                  Use a measuring tape for best results
                 </p>
               </CardContent>
             </Card>

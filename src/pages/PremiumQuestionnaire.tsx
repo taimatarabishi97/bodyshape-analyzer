@@ -242,7 +242,7 @@ export default function PremiumQuestionnaire() {
     if (currentStep > 1) {
       setCurrentStep(prev => prev - 1);
     } else {
-      navigate('/method');
+      navigate('/');
     }
   };
 
@@ -250,31 +250,14 @@ export default function PremiumQuestionnaire() {
     setIsSubmitting(true);
 
     try {
-      // Map premium answers to classification format
-      const mappedAnswers = mapToPropAnswers(answers);
+      // Store questionnaire answers in sessionStorage for later use
+      sessionStorage.setItem('questionnaireAnswers', JSON.stringify(answers));
+      sessionStorage.setItem('questionnaireNotes', notes);
+
+      toast.success('Great! Now choose how you\\'d like to analyze your body shape.');
       
-      // Classify body shape
-      const bodyShape = classifyBodyShape(mappedAnswers as QuestionnaireAnswers, {});
-      const analysisResult = getAnalysisResult(bodyShape, stylingRecommendations);
-
-      // Navigate to results
-      navigate('/results', { 
-        state: { 
-          shape: bodyShape,
-          confidence: 0.85,
-          timestamp: new Date().toISOString(),
-          method: 'manual',
-          stylePreferences: {
-            goal: answers.goal,
-            styleVibe: answers.styleVibe,
-            fitPreference: answers.fitPreference,
-            occasions: answers.occasions,
-          },
-          notes,
-        } 
-      });
-
-      toast.success('Analysis complete! Let\'s see your personalized results.');
+      // Navigate to method selection
+      navigate('/method');
     } catch (error) {
       console.error('Error during submission:', error);
       toast.error('Something went wrong. Please try again.');

@@ -8,13 +8,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Shield, Camera, Lock, Ruler } from 'lucide-react';
+import { Shield, Camera, Lock } from 'lucide-react';
 
 interface CameraConsentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onGrantPermission: () => void;
-  onManualEntry?: () => void;
   isLoading?: boolean;
 }
 
@@ -22,7 +21,6 @@ export function CameraConsentModal({
   isOpen,
   onClose,
   onGrantPermission,
-  onManualEntry,
   isLoading = false
 }: CameraConsentModalProps) {
   return (
@@ -80,35 +78,11 @@ export function CameraConsentModal({
             </div>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <p className="text-sm text-blue-800">
-              <strong>Note:</strong> You'll need to grant camera permission in your browser. 
-              Make sure you're in a well-lit area and standing about 6 feet from the camera.
+          <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+            <p className="text-sm text-purple-800">
+              <strong>Tip:</strong> Stand in a well-lit area, about 6 feet from your camera, with your full body visible.
             </p>
           </div>
-
-          {/* Manual Fallback Option */}
-          {onManualEntry && (
-            <div className="border-t pt-4 mt-4">
-              <div className="flex items-start space-x-3 mb-3">
-                <Ruler className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" />
-                <div>
-                  <h4 className="font-medium text-sm">Alternative: Manual Measurements</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Don't have a camera or prefer not to use it? Enter your measurements manually.
-                  </p>
-                </div>
-              </div>
-              <Button
-                variant="outline"
-                onClick={onManualEntry}
-                className="w-full"
-              >
-                <Ruler className="w-4 h-4 mr-2" />
-                Enter Measurements Manually
-              </Button>
-            </div>
-          )}
         </div>
 
         <DialogFooter className="flex flex-col sm:flex-row gap-2">
@@ -122,7 +96,7 @@ export function CameraConsentModal({
           </Button>
           <Button
             onClick={onGrantPermission}
-            className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700"
+            className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
             disabled={isLoading}
           >
             {isLoading ? (

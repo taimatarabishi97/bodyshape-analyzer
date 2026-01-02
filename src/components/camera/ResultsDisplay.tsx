@@ -9,10 +9,9 @@ interface ResultsDisplayProps {
   result: BodyShapeResult;
   onRetry: () => void;
   onUseResult: (result: BodyShapeResult) => void;
-  onManualEntry?: () => void;
 }
 
-export function ResultsDisplay({ result, onRetry, onUseResult, onManualEntry }: ResultsDisplayProps) {
+export function ResultsDisplay({ result, onRetry, onUseResult }: ResultsDisplayProps) {
   const getShapeColor = (shape: BodyShapeType) => {
     switch (shape) {
       case 'HOURGLASS': return 'bg-pink-100 text-pink-800 border-pink-200';
@@ -283,21 +282,11 @@ export function ResultsDisplay({ result, onRetry, onUseResult, onManualEntry }: 
             Retry Analysis
           </Button>
           
-          {onManualEntry && (
-            <Button
-              variant="outline"
-              onClick={onManualEntry}
-              className="flex-1"
-            >
-              Enter Measurements Manually
-            </Button>
-          )}
-          
           <Button
             onClick={() => onUseResult(result)}
-            className="flex-1 bg-blue-600 hover:bg-blue-700"
+            className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700"
           >
-            Use This Result
+            View Full Results
           </Button>
         </CardFooter>
       </Card>

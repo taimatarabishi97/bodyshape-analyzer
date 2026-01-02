@@ -19,9 +19,9 @@ export default function AccessGate() {
   const isBasicMode = import.meta.env.VITE_MODE?.toLowerCase() === 'basic';
 
   useEffect(() => {
-    // If in BASIC_MODE, skip access gate
+    // If in BASIC_MODE, skip access gate - go directly to questionnaire
     if (isBasicMode) {
-      navigate('/method');
+      navigate('/questionnaire');
       return;
     }
 
@@ -81,8 +81,8 @@ export default function AccessGate() {
         sessionStorage.setItem('user_email', accessToken.email);
         sessionStorage.setItem('service_tier', accessToken.tier);
 
-        toast.success('Access granted! Starting your analysis...');
-        navigate('/method');
+        toast.success('Access granted! Let\\'s get started...');
+        navigate('/questionnaire');
       } else {
         // Validate email (check if they have a paid purchase)
         // First check if email has any valid access tokens
@@ -114,8 +114,8 @@ export default function AccessGate() {
         sessionStorage.setItem('user_email', validToken.email);
         sessionStorage.setItem('service_tier', validToken.tier);
 
-        toast.success('Access granted! Starting your analysis...');
-        navigate('/method');
+        toast.success('Access granted! Let\\'s get started...');
+        navigate('/questionnaire');
       }
     } catch (error) {
       console.error('Error validating access:', error);
