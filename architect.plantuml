@@ -1,0 +1,99 @@
+@startuml architect.plantuml
+
+title Camera Body Shape Analysis - System Architecture
+
+package "Frontend Application (React + TypeScript)" {
+  [React App Container] as app
+  
+  package "UI Components Layer" {
+    [CameraConsentModal] as consent
+    [CameraInterface] as interface
+    [PoseOverlay] as overlay
+    [ResultsDisplay] as results
+    [QualityIndicator] as quality_indicator
+  }
+  
+  package "Business Logic Layer" {
+    [CameraController] as controller
+    [PoseDetectionService] as pose_service
+    [MeasurementCalculator] as measurement_service
+    [BodyShapeClassifier] as classifier_service
+    [QualityAssessmentService] as quality_service
+  }
+  
+  package "State Management" {
+    [CameraContext] as context
+    [Custom Hooks] as hooks
+    [Local Storage] as storage
+  }
+}
+
+package "Infrastructure Layer" {
+  [TensorFlow.js Runtime] as tfjs
+  [Camera API Bridge] as camera_api
+  [Web Worker Pool] as workers
+  [Canvas Renderer] as canvas
+}
+
+package "External Dependencies" {
+  [TensorFlow Hub Models] as tfhub
+  [Browser Media APIs] as browser_media
+  [Device Camera Hardware] as camera_hardware
+}
+
+' Application flow
+app --> consent : triggers
+consent --> interface : permission granted
+interface --> overlay : displays pose
+interface --> quality_indicator : shows feedback
+interface --> results : displays outcome
+
+' Business logic connections
+interface --> controller : manages
+controller --> pose_service : calls detection
+pose_service --> measurement_service : provides landmarks
+measurement_service --> classifier_service : provides measurements
+classifier_service --> results : returns classification
+pose_service --> quality_service : provides landmarks
+quality_service --> quality_indicator : provides feedback
+
+' Infrastructure connections
+pose_service --> tfjs : uses
+tfjs --> tfhub : loads models
+controller --> camera_api : manages stream
+camera_api --> browser_media : uses getUserMedia
+browser_media --> camera_hardware : accesses
+interface --> canvas : renders video/overlay
+pose_service --> workers : offloads processing
+
+' State management
+controller --> context : updates state
+context --> hooks : provides values
+hooks --> storage : caches data
+
+' Key data flows
+note right of pose_service
+  Input: Video frames
+  Output: Pose landmarks (17 keypoints)
+  Processing: TensorFlow.js MoveNet
+end note
+
+note right of measurement_service
+  Input: Landmark coordinates
+  Output: Body measurements
+  Calculations: Shoulder width, waist, hips
+end note
+
+note right of classifier_service
+  Input: Normalized measurements
+  Output: Body shape + confidence
+  Algorithm: Ratio-based classification
+end note
+
+note right of quality_service
+  Input: Landmarks + image data
+  Output: Quality score + feedback
+  Metrics: Confidence, stability, lighting
+end note
+
+@enduml

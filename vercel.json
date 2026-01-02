@@ -1,0 +1,11 @@
+{
+  "buildCommand": "pnpm run build",
+  "installCommand": "pnpm install",
+  "devCommand": "pnpm run dev",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "regions": ["iad1"],
+  "env": {
+    "NODE_VERSION": "18"
+  }
+}

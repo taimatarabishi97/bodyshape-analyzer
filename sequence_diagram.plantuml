@@ -1,0 +1,189 @@
+@startuml sequence_diagram.plantuml
+
+title Camera Body Shape Analysis - Sequence Diagram
+
+actor User
+participant "UI Component" as UI
+participant "CameraService" as Camera
+participant "PoseDetectionService" as Pose
+participant "MeasurementCalculator" as Measure
+participant "BodyShapeClassifier" as Classify
+participant "QualityAssessmentService" as Quality
+participant "CameraContext" as Context
+participant "LocalStorage" as Storage
+
+' ==== Initialization Phase ====
+User -> UI: Clicks "Camera Analysis"
+UI -> Context: dispatch({ type: 'REQUEST_PERMISSION' })
+Context -> Camera: requestPermission()
+
+Camera -> Camera: navigator.mediaDevices.getUserMedia({ video: true })
+alt Permission Granted
+  Camera --> Context: PermissionStatus.GRANTED
+  Context --> UI: Updates state: permission = GRANTED
+else Permission Denied
+  Camera --> Context: PermissionStatus.DENIED
+  Context --> UI: Updates state: permission = DENIED, error = "Permission denied"
+  UI --> User: Shows permission denied message\nwith manual fallback option
+end
+
+' ==== Camera Activation Phase ====
+User -> UI: Clicks "Start Camera" (after permission)
+UI -> Context: dispatch({ type: 'START_CAMERA' })
+Context -> Camera: getStream({ facingMode: 'user' })
+Camera --> Context: MediaStream object
+Context -> UI: Updates state: stream = stream, status = ACTIVE
+UI -> UI: Creates video element\nStarts video playback
+
+' ==== Real-time Detection Loop ====
+loop Every 100ms while status = ACTIVE
+  UI -> Pose: detectFromVideo(videoElement)
+  Pose -> Pose: Runs TensorFlow.js MoveNet model
+  Pose --> UI: Returns PoseLandmark[] (17 landmarks)
+  
+  UI -> Quality: assessPoseQuality(landmarks)
+  Quality -> Quality: Calculates confidence, stability, framing
+  Quality --> UI: Returns QualityScore
+  
+  UI -> Context: dispatch({ type: 'UPDATE_LANDMARKS', landmarks, quality })
+  Context -> UI: Updates state: landmarks, quality
+  
+  UI -> UI: Updates pose overlay\nUpdates quality indicators
+  
+  alt Quality too low (overall < 0.5)
+    UI -> UI: Shows guidance message\nDisables capture button
+  else Quality acceptable (overall >= 0.7)
+    UI -> UI: Shows "Ready to capture"\nEnables capture button
+  end
+end
+
+' ==== Capture and Analysis Phase ====
+User -> UI: Clicks "Capture"
+UI -> Context: dispatch({ type: 'CAPTURE' })
+Context -> UI: Updates state: status = CAPTURING
+
+UI -> Camera: takeSnapshot()
+Camera --> UI: Returns ImageData
+
+UI -> Pose: detectFromImage(imageData)
+Pose -> Pose: Final high-confidence detection
+Pose --> UI: Returns final PoseLandmark[]
+
+UI -> Measure: calculateShoulderWidth(landmarks)
+Measure --> UI: Returns shoulderWidth
+
+UI -> Measure: calculateWaistCircumference(landmarks)
+Measure --> UI: Returns waistCircumference
+
+UI -> Measure: calculateHipWidth(landmarks)
+Measure --> UI: Returns hipWidth
+
+UI -> Measure: calculateHeight(landmarks)
+Measure --> UI: Returns height
+
+UI -> Measure: normalizeMeasurements(rawMeasurements, height)
+Measure --> UI: Returns NormalizedMeasurements
+
+' ==== Classification Phase ====
+UI -> Classify: classify(normalizedMeasurements)
+Classify -> Classify: calculateRatios(measurements)
+note right Classify
+  Calculates:
+  - Shoulder-to-Hip Ratio
+  - Waist-to-Hip Ratio  
+  - Shoulder-to-Waist Ratio
+end note
+
+Classify -> Classify: applyThresholds(ratios, measurements)
+alt Shape = HOURGLASS
+  Classify -> Classify: hourglass classification logic
+else Shape = PEAR
+  Classify -> Classify: pear classification logic
+else Shape = INVERTED_TRIANGLE
+  Classify -> Classify: inverted triangle logic
+else Shape = RECTANGLE
+  Classify -> Classify: rectangle classification logic
+else Shape = APPLE
+  Classify -> Classify: apple classification logic
+else
+  Classify -> Classify: unknown shape
+end
+
+Classify -> Classify: calculateConfidence(landmarks)
+Classify --> UI: Returns BodyShapeResult
+
+' ==== Quality Final Assessment ====
+UI -> Quality: assessPoseQuality(finalLandmarks)
+Quality -> Quality: Comprehensive assessment
+Quality --> UI: Returns final QualityScore
+
+' ==== Results Handling ====
+UI -> Context: dispatch({ type: 'COMPLETE', result })
+Context -> UI: Updates state: status = COMPLETE, result = result
+
+UI -> Storage: Optional: store result locally
+Storage --> UI: Confirmation
+
+UI -> UI: Displays results with:
+note right UI
+  - Body shape classification
+  - Confidence percentage
+  - Visual diagram
+  - Quality feedback
+  - Action buttons
+end note
+
+' ==== User Action Phase ====
+alt User clicks "Use This Result"
+  User -> UI: Clicks "Use This Result"
+  UI -> Context: dispatch({ type: 'USE_RESULT' })
+  Context --> UI: Returns result data
+  UI -> UI: Navigates back to questionnaire\nAuto-fills body shape field
+else User clicks "Try Again"
+  User -> UI: Clicks "Try Again"
+  UI -> Context: dispatch({ type: 'RESET' })
+  Context -> UI: Resets state to initial
+  UI -> UI: Returns to camera interface
+else User clicks "Enter Manually"
+  User -> UI: Clicks "Enter Manually"
+  UI -> Context: dispatch({ type: 'RESET' })
+  Context -> UI: Resets state
+  UI -> UI: Shows manual input form
+end
+
+' ==== Cleanup Phase ====
+UI -> Context: dispatch({ type: 'STOP_CAMERA' })
+Context -> Camera: releaseStream()
+Camera -> Camera: Stops all tracks\nReleases resources
+Context -> Pose: dispose()
+Pose -> Pose: Disposes tensors\nCleans up model
+Context -> UI: Updates state: stream = null, status = IDLE
+
+' ==== Error Handling Sequence ====
+group Error: Camera Access Failed
+  Camera -> Context: Error: "Camera not accessible"
+  Context -> UI: Updates state: status = ERROR, error = message
+  UI -> UI: Shows error modal with:
+  note right UI
+    - Error description
+    - Troubleshooting steps
+    - Manual fallback option
+    - Retry button
+  end note
+end
+
+group Error: Pose Detection Failed
+  Pose -> UI: Error: "Model failed to detect pose"
+  UI -> Context: dispatch({ type: 'ERROR', error })
+  Context -> UI: Updates state: status = ERROR
+  UI -> UI: Shows detection error\nwith guidance for retry
+end
+
+group Error: Poor Quality Scan
+  Quality -> UI: QualityScore.overall < 0.4
+  UI -> Context: dispatch({ type: 'QUALITY_ERROR', score })
+  Context -> UI: Updates state: quality = score
+  UI -> UI: Shows quality warning\nwith specific suggestions
+end
+
+@enduml

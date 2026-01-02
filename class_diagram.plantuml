@@ -1,0 +1,310 @@
+@startuml class_diagram.plantuml
+
+title Camera Body Shape Analysis - Class Diagram
+
+' ========== INTERFACES ==========
+interface ICameraService {
+  +requestPermission(): Promise<PermissionStatus>
+  +getStream(constraints: MediaStreamConstraints): Promise<MediaStream>
+  +releaseStream(): void
+  +switchCamera(): Promise<void>
+  +takeSnapshot(): ImageData
+  +getCurrentCamera(): CameraType
+}
+
+interface IPoseDetector {
+  +initialize(modelConfig: PoseDetectionConfig): Promise<void>
+  +detect(image: ImageData): Promise<PoseLandmark[]>
+  +detectFromVideo(video: HTMLVideoElement): Promise<PoseLandmark[]>
+  +dispose(): void
+  +getModelInfo(): ModelInfo
+}
+
+interface IBodyShapeClassifier {
+  +classify(measurements: BodyMeasurements): BodyShapeResult
+  +calculateConfidence(landmarks: PoseLandmark[]): number
+  +getShapeDescription(shape: BodyShapeType): string
+  +getVisualizationData(shape: BodyShapeType): ShapeVisualization
+}
+
+interface IQualityAssessor {
+  +assessPoseQuality(landmarks: PoseLandmark[]): QualityScore
+  +assessLighting(image: ImageData): LightingScore
+  +assessStability(landmarkHistory: PoseLandmark[][]): StabilityScore
+  +getFeedback(score: QualityScore): QualityFeedback
+  +canProceed(score: QualityScore): boolean
+}
+
+' ========== ENUMS ==========
+enum BodyShapeType {
+  HOURGLASS
+  PEAR
+  INVERTED_TRIANGLE
+  RECTANGLE
+  APPLE
+  UNKNOWN
+}
+
+enum CameraStatus {
+  IDLE
+  REQUESTING_PERMISSION
+  ACTIVE
+  CAPTURING
+  PROCESSING
+  COMPLETE
+  ERROR
+}
+
+enum PermissionStatus {
+  GRANTED
+  DENIED
+  PROMPT
+}
+
+' ========== DATA TYPES ==========
+class PoseLandmark {
+  +x: number
+  +y: number
+  +z?: number
+  +score: number
+  +name: string
+  +visible: boolean
+}
+
+class BodyMeasurements {
+  +shoulderWidth: number
+  +waistCircumference: number
+  +hipWidth: number
+  +height: number
+  +timestamp: Date
+}
+
+class BodyShapeResult {
+  +shape: BodyShapeType
+  +confidence: number
+  +ratios: BodyRatios
+  +measurements: BodyMeasurements
+  +quality: QualityScore
+  +timestamp: Date
+}
+
+class QualityScore {
+  +overall: number
+  +landmarks: number
+  +stability: number
+  +lighting: number
+  +framing: number
+  +frontality: number
+}
+
+class QualityFeedback {
+  +message: string
+  +suggestions: string[]
+  +canProceed: boolean
+  +priority: 'low' | 'medium' | 'high'
+}
+
+' ========== CONFIGURATION CLASSES ==========
+class PoseDetectionConfig {
+  +modelType: 'movenet' | 'blazepose'
+  +modelUrl: string
+  +maxPoses: number
+  +scoreThreshold: number
+  +nmsRadius: number
+  +flipHorizontal: boolean
+}
+
+class ClassificationThresholds {
+  +hourglass: HourglassThresholds
+  +pear: PearThresholds
+  +invertedTriangle: InvertedTriangleThresholds
+  +rectangle: RectangleThresholds
+  +apple: AppleThresholds
+}
+
+class HourglassThresholds {
+  +shoulderHipDiff: number = 0.05
+  +waistReduction: number = 0.25
+}
+
+class PearThresholds {
+  +hipShoulderDiff: number = 0.05
+  +waistHipRatio: number = 0.85
+}
+
+class InvertedTriangleThresholds {
+  +shoulderHipDiff: number = 0.05
+  +shoulderWaistRatio: number = 1.2
+}
+
+class RectangleThresholds {
+  +measurementVariance: number = 0.05
+}
+
+class AppleThresholds {
+  +waistDominance: number = 0.05
+}
+
+' ========== SERVICE IMPLEMENTATIONS ==========
+class CameraService {
+  -stream: MediaStream | null
+  -permission: PermissionStatus
+  -currentCamera: CameraType
+  -videoElement: HTMLVideoElement | null
+  
+  +requestPermission(): Promise<PermissionStatus>
+  +getStream(constraints: MediaStreamConstraints): Promise<MediaStream>
+  +releaseStream(): void
+  +switchCamera(): Promise<void>
+  +takeSnapshot(): ImageData
+  +getCurrentCamera(): CameraType
+  -setupVideoElement(): void
+  -cleanupVideoElement(): void
+}
+
+class PoseDetectionService {
+  -model: MoveNetModel | BlazePoseModel
+  -isInitialized: boolean = false
+  -config: PoseDetectionConfig
+  -worker: Worker | null
+  
+  +initialize(config: PoseDetectionConfig): Promise<void>
+  +detect(image: ImageData): Promise<PoseLandmark[]>
+  +detectFromVideo(video: HTMLVideoElement): Promise<PoseLandmark[]>
+  +dispose(): void
+  +getModelInfo(): ModelInfo
+  -loadModel(): Promise<void>
+  -processInWorker(image: ImageData): Promise<PoseLandmark[]>
+  -convertToLandmarks(tfResult: any): PoseLandmark[]
+}
+
+class MeasurementCalculator {
+  -pixelToCmRatio: number = 1.0
+  -calibrationData: CalibrationData | null
+  
+  +calculateShoulderWidth(landmarks: PoseLandmark[]): number
+  +calculateWaistCircumference(landmarks: PoseLandmark[]): number
+  +calculateHipWidth(landmarks: PoseLandmark[]): number
+  +calculateHeight(landmarks: PoseLandmark[]): number
+  +normalizeMeasurements(measurements: RawMeasurements, height: number): NormalizedMeasurements
+  +estimatePixelToCmRatio(landmarks: PoseLandmark[], knownHeightCm?: number): number
+  -calculateDistance(point1: Point, point2: Point): number
+  -calculateMidpoint(point1: Point, point2: Point): Point
+}
+
+class BodyShapeClassifier {
+  -thresholds: ClassificationThresholds
+  -calibrationData: ClassificationCalibration
+  
+  +classify(measurements: BodyMeasurements): BodyShapeResult
+  +calculateConfidence(landmarks: PoseLandmark[]): number
+  +getShapeDescription(shape: BodyShapeType): string
+  +getVisualizationData(shape: BodyShapeType): ShapeVisualization
+  -calculateRatios(measurements: BodyMeasurements): BodyRatios
+  -applyThresholds(ratios: BodyRatios, measurements: BodyMeasurements): BodyShapeResult
+  -calculateVariance(values: number[]): number
+}
+
+class QualityAssessmentService {
+  -thresholds: QualityThresholds
+  -landmarkHistory: PoseLandmark[][]
+  -maxHistorySize: number = 10
+  
+  +assessPoseQuality(landmarks: PoseLandmark[]): QualityScore
+  +assessLighting(image: ImageData): LightingScore
+  +assessStability(landmarkHistory: PoseLandmark[][]): StabilityScore
+  +getFeedback(score: QualityScore): QualityFeedback
+  +canProceed(score: QualityScore): boolean
+  +updateHistory(landmarks: PoseLandmark[]): void
+  -calculateLandmarkConfidence(landmarks: PoseLandmark[]): number
+  -calculateBoundingBox(landmarks: PoseLandmark[]): BoundingBox
+  -calculateShoulderAngle(landmarks: PoseLandmark[]): number
+}
+
+' ========== REACT COMPONENTS ==========
+class CameraContext {
+  -state: CameraState
+  -dispatch: React.Dispatch<CameraAction>
+  
+  +CameraProvider: React.FC<CameraProviderProps>
+  +useCamera(): CameraContextValue
+  -reducer(state: CameraState, action: CameraAction): CameraState
+}
+
+class CameraContextValue {
+  +state: CameraState
+  +requestPermission: () => Promise<void>
+  +startCamera: () => Promise<void>
+  +stopCamera: () => void
+  +capture: () => Promise<BodyShapeResult>
+  +switchCamera: () => Promise<void>
+  +reset: () => void
+  +setConfig: (config: Partial<CameraConfig>) => void
+}
+
+class CameraState {
+  +status: CameraStatus
+  +permission: PermissionStatus
+  +stream: MediaStream | null
+  +currentCamera: CameraType
+  +error: string | null
+  +landmarks: PoseLandmark[] | null
+  +quality: QualityScore | null
+  +result: BodyShapeResult | null
+  +config: CameraConfig
+}
+
+' ========== RELATIONSHIPS ==========
+ICameraService <|.. CameraService
+IPoseDetector <|.. PoseDetectionService
+IBodyShapeClassifier <|.. BodyShapeClassifier
+IQualityAssessor <|.. QualityAssessmentService
+
+CameraService --> PoseDetectionService : uses
+PoseDetectionService --> MeasurementCalculator : provides landmarks
+MeasurementCalculator --> BodyShapeClassifier : provides measurements
+PoseDetectionService --> QualityAssessmentService : provides landmarks
+
+CameraContext --> CameraService : manages
+CameraContext --> PoseDetectionService : coordinates
+CameraContext --> BodyShapeClassifier : triggers
+CameraContext --> QualityAssessmentService : monitors
+
+BodyShapeClassifier ..> ClassificationThresholds : configures
+PoseDetectionService ..> PoseDetectionConfig : configures
+QualityAssessmentService ..> QualityThresholds : configures
+
+' ========== COMPOSITION RELATIONSHIPS ==========
+BodyShapeResult *-- BodyMeasurements : contains
+BodyShapeResult *-- BodyRatios : contains
+BodyShapeResult *-- QualityScore : contains
+
+QualityScore *-- QualityFeedback : generates
+ClassificationThresholds *-- HourglassThresholds : includes
+ClassificationThresholds *-- PearThresholds : includes
+ClassificationThresholds *-- InvertedTriangleThresholds : includes
+ClassificationThresholds *-- RectangleThresholds : includes
+ClassificationThresholds *-- AppleThresholds : includes
+
+' ========== DEPENDENCY INJECTION ==========
+note top of CameraContext
+  Uses dependency injection pattern
+  for testability and flexibility
+end note
+
+note top of PoseDetectionService
+  Can switch between MoveNet and
+  BlazePose models at runtime
+end note
+
+note top of BodyShapeClassifier
+  Thresholds are configurable
+  and can be calibrated per user
+end note
+
+note top of QualityAssessmentService
+  Provides real-time feedback
+  and prevents poor quality scans
+end note
+
+@enduml

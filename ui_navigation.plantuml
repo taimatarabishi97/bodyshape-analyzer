@@ -1,0 +1,167 @@
+@startuml ui_navigation.plantuml
+
+title Camera Body Shape Analysis - UI Navigation Flow
+
+state "Questionnaire Page" as questionnaire {
+  state "Main Questionnaire" as main_q
+  state "Body Shape Section" as shape_section
+  
+  [*] --> main_q
+  main_q --> shape_section : scrolls to\nbody shape questions
+  
+  shape_section --> CameraButton : clicks\n"Camera Analysis"
+}
+
+state "Camera Consent Flow" as consent_flow {
+  state "Consent Modal" as consent_modal
+  state "Permission Request" as permission_req
+  state "Permission Granted" as permission_ok
+  state "Permission Denied" as permission_denied
+  state "Manual Fallback" as manual_fallback
+  
+  CameraButton --> consent_modal : opens modal
+  
+  consent_modal --> permission_req : "Allow Camera"
+  permission_req --> permission_ok : user grants
+  permission_req --> permission_denied : user denies
+  
+  permission_denied --> manual_fallback : "Enter Manually"
+  permission_denied --> questionnaire : "Cancel"
+  
+  manual_fallback --> questionnaire : returns with\nmanual input
+}
+
+state "Camera Interface" as camera_ui {
+  state "Camera View" as camera_view
+  state "Pose Detection" as pose_detection
+  state "Quality Assessment" as quality_check
+  state "Guidance Display" as guidance
+  state "Ready State" as ready
+  state "Capture State" as capture
+  
+  permission_ok --> camera_view : opens full-screen
+  
+  camera_view --> pose_detection : starts detection
+  
+  pose_detection --> quality_check : landmarks detected
+  
+  quality_check --> guidance : quality < 0.5
+  quality_check --> ready : quality >= 0.7
+  
+  guidance --> camera_view : "Adjust Position"
+  ready --> capture : "Capture"
+  
+  state "Camera Controls" as controls {
+    state "Switch Camera" as switch_cam
+    state "Cancel" as cancel_cam
+    
+    camera_view --> switch_cam : front/back toggle
+    camera_view --> cancel_cam : exit camera
+    switch_cam --> camera_view : returns
+    cancel_cam --> questionnaire : returns
+  }
+}
+
+state "Processing State" as processing {
+  state "Analysis Progress" as analysis
+  state "Results Generation" as results_gen
+  
+  capture --> analysis : "Analyzing..."
+  analysis --> results_gen : processing complete
+}
+
+state "Results Display" as results {
+  state "Results View" as results_view
+  state "Shape Card" as shape_card
+  state "Confidence Display" as confidence
+  state "Visual Diagram" as diagram
+  state "Action Buttons" as actions
+  
+  results_gen --> results_view : displays
+  
+  results_view --> shape_card : shows classification
+  results_view --> confidence : shows confidence %
+  results_view --> diagram : shows shape visualization
+  
+  results_view --> actions : provides buttons
+  
+  state "Result Actions" as result_actions {
+    state "Use Result" as use_result
+    state "Try Again" as try_again
+    state "Manual Entry" as manual_entry
+    
+    actions --> use_result : "Use This Result"
+    actions --> try_again : "Try Again"
+    actions --> manual_entry : "Enter Manually"
+    
+    use_result --> questionnaire : returns with\ncamera result
+    try_again --> camera_view : restarts camera flow
+    manual_entry --> questionnaire : returns with\nmanual input
+  }
+}
+
+state "Error States" as error_states {
+  state "Camera Error" as cam_error
+  state "Detection Error" as det_error
+  state "Quality Error" as qual_error
+  state "Recovery Options" as recovery
+  
+  camera_view --> cam_error : camera fails
+  pose_detection --> det_error : no pose detected
+  quality_check --> qual_error : persistent poor quality
+  
+  cam_error --> recovery : shows options
+  det_error --> recovery : shows options
+  qual_error --> recovery : shows options
+  
+  recovery --> camera_view : "Retry"
+  recovery --> manual_fallback : "Use Manual"
+  recovery --> questionnaire : "Cancel"
+}
+
+' Navigation relationships
+questionnaire --> consent_flow : initiates
+camera_ui --> processing : captures
+processing --> results : completes
+error_states --> camera_ui : recovers to
+
+' Key navigation constraints
+note right of questionnaire
+  Primary entry point:
+  - User must be on questionnaire
+  - Body shape section visible
+  - Camera button accessible
+end note
+
+note right of consent_flow
+  Mandatory step:
+  - Explicit user consent required
+  - Privacy disclaimer shown
+  - Manual fallback always available
+end note
+
+note right of camera_ui
+  Real-time feedback:
+  - Pose overlay visible
+  - Quality indicators shown
+  - Guidance provided
+  - Capture only when ready
+end note
+
+note right of results
+  Final decision point:
+  - User can accept result
+  - User can retry analysis
+  - User can enter manually
+  - All paths return to questionnaire
+end note
+
+note right of error_states
+  Graceful degradation:
+  - Clear error messages
+  - Specific recovery options
+  - Never leaves user stuck
+  - Always provides way back
+end note
+
+@enduml

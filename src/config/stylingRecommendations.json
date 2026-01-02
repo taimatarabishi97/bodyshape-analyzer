@@ -1,0 +1,536 @@
+{
+  "pear": {
+    "name": "Pear Shape",
+    "description": "Your body shape is characterized by narrower shoulders and a fuller lower body. Your hips are wider than your shoulders, creating a beautiful feminine silhouette.",
+    "recommendations": [
+      {
+        "category": "Tops",
+        "recommendations": [
+          "Boat neck and off-shoulder styles to broaden shoulders",
+          "Embellished or detailed necklines to draw attention upward",
+          "Structured blazers and jackets with shoulder details",
+          "Bright colors and patterns on top",
+          "V-necks and scoop necks to elongate"
+        ],
+        "avoid": [
+          "Clingy fabrics on the lower body",
+          "Horizontal stripes on hips",
+          "Tight-fitting bottoms without structure"
+        ]
+      },
+      {
+        "category": "Bottoms",
+        "recommendations": [
+          "Dark-colored pants and skirts",
+          "A-line skirts that skim over hips",
+          "Bootcut or flared jeans to balance proportions",
+          "High-waisted styles with structured fabric",
+          "Straight-leg trousers"
+        ],
+        "avoid": [
+          "Skinny jeans without balance on top",
+          "Pleated or gathered waistbands",
+          "Light-colored bottoms with dark tops",
+          "Cargo pants with large pockets on hips"
+        ]
+      },
+      {
+        "category": "Dresses",
+        "recommendations": [
+          "A-line dresses that flow from the waist",
+          "Fit-and-flare styles",
+          "Empire waist dresses",
+          "Wrap dresses with V-necklines",
+          "Dresses with embellished tops"
+        ],
+        "avoid": [
+          "Bodycon dresses without structure",
+          "Drop-waist styles",
+          "Dresses with heavy embellishment on hips"
+        ]
+      },
+      {
+        "category": "Jackets & Outerwear",
+        "recommendations": [
+          "Structured blazers that end at hip bone",
+          "Jackets with shoulder pads or details",
+          "Cropped jackets to define waist",
+          "Belted coats to emphasize waist"
+        ],
+        "avoid": [
+          "Jackets that end at the widest part of hips",
+          "Boxy, oversized styles without definition"
+        ]
+      },
+      {
+        "category": "Necklines",
+        "recommendations": [
+          "Boat neck",
+          "Off-shoulder",
+          "Square neck",
+          "V-neck",
+          "Scoop neck"
+        ],
+        "avoid": [
+          "Halter necks (can narrow shoulders further)",
+          "Turtlenecks without balance"
+        ]
+      },
+      {
+        "category": "Patterns & Fabrics",
+        "recommendations": [
+          "Patterns and prints on top half",
+          "Solid, darker colors on bottom",
+          "Structured fabrics for bottoms",
+          "Flowing fabrics for tops"
+        ],
+        "avoid": [
+          "Large prints on hips and thighs",
+          "Clingy, thin fabrics on lower body"
+        ]
+      }
+    ],
+    "colorTips": [
+      "Wear brighter colors and patterns on your upper body",
+      "Choose darker, solid colors for bottoms to create balance",
+      "Monochromatic looks can elongate your silhouette",
+      "Use color blocking to draw attention to your upper body"
+    ],
+    "fitTips": [
+      "Balance your proportions by adding volume to your shoulders",
+      "Define your waist with belts or fitted styles",
+      "Choose bottoms that skim rather than cling",
+      "Ensure proper fit in the hip area without excess fabric"
+    ]
+  },
+  "hourglass": {
+    "name": "Hourglass Shape",
+    "description": "Your body shape features balanced shoulders and hips with a well-defined waist. This is considered a proportionate and curvy silhouette.",
+    "recommendations": [
+      {
+        "category": "Tops",
+        "recommendations": [
+          "Wrap tops that emphasize the waist",
+          "Fitted tops that follow your curves",
+          "V-neck and sweetheart necklines",
+          "Peplum tops to highlight waist",
+          "Belted styles"
+        ],
+        "avoid": [
+          "Boxy, shapeless tops that hide curves",
+          "Overly baggy styles",
+          "High necklines that add bulk"
+        ]
+      },
+      {
+        "category": "Bottoms",
+        "recommendations": [
+          "High-waisted jeans and trousers",
+          "Pencil skirts that hug curves",
+          "Bootcut and flared jeans",
+          "Tailored pants with defined waist",
+          "A-line skirts"
+        ],
+        "avoid": [
+          "Low-rise pants that break the waist line",
+          "Pleated or baggy styles",
+          "Straight-cut pants without shape"
+        ]
+      },
+      {
+        "category": "Dresses",
+        "recommendations": [
+          "Wrap dresses (perfect for hourglass)",
+          "Fit-and-flare styles",
+          "Bodycon dresses with structure",
+          "Belted sheath dresses",
+          "Mermaid silhouettes"
+        ],
+        "avoid": [
+          "Empire waist (hides your natural waist)",
+          "Shapeless shift dresses",
+          "Drop-waist styles"
+        ]
+      },
+      {
+        "category": "Jackets & Outerwear",
+        "recommendations": [
+          "Belted trench coats",
+          "Fitted blazers that nip at the waist",
+          "Peplum jackets",
+          "Wrap coats"
+        ],
+        "avoid": [
+          "Boxy, oversized jackets",
+          "Straight-cut coats without definition"
+        ]
+      },
+      {
+        "category": "Necklines",
+        "recommendations": [
+          "V-neck",
+          "Sweetheart",
+          "Scoop neck",
+          "Wrap necklines",
+          "Square neck"
+        ],
+        "avoid": [
+          "High crew necks (can add bulk)",
+          "Turtlenecks without balance"
+        ]
+      },
+      {
+        "category": "Patterns & Fabrics",
+        "recommendations": [
+          "Fabrics with stretch that follow curves",
+          "Structured materials that provide support",
+          "Vertical stripes to elongate",
+          "Fitted patterns that highlight shape"
+        ],
+        "avoid": [
+          "Stiff, rigid fabrics that don't drape",
+          "Overly clingy materials without structure",
+          "Bulky, heavy fabrics"
+        ]
+      }
+    ],
+    "colorTips": [
+      "Monochromatic outfits elongate your silhouette",
+      "You can wear bold colors and patterns confidently",
+      "Color blocking at the waist emphasizes your curves",
+      "Both light and dark colors work well for your shape"
+    ],
+    "fitTips": [
+      "Always emphasize your waist - it's your best feature",
+      "Choose fitted styles that follow your natural curves",
+      "Avoid anything too loose or too tight",
+      "Tailoring is your friend - invest in proper fit"
+    ]
+  },
+  "apple": {
+    "name": "Apple Shape",
+    "description": "Your body shape carries weight around the midsection with slimmer legs and arms. Your shoulders may be broader than your hips.",
+    "recommendations": [
+      {
+        "category": "Tops",
+        "recommendations": [
+          "V-neck and deep scoop necks to elongate",
+          "Empire waist tops",
+          "Flowy tunics that skim the midsection",
+          "Tops with vertical details or seams",
+          "Structured shoulders to balance"
+        ],
+        "avoid": [
+          "Tight, clingy tops around midsection",
+          "Crop tops",
+          "Horizontal stripes across stomach",
+          "Belts at natural waist"
+        ]
+      },
+      {
+        "category": "Bottoms",
+        "recommendations": [
+          "Slim-fit jeans to show off legs",
+          "Straight-leg trousers",
+          "Skinny jeans (your legs can carry them)",
+          "A-line skirts",
+          "Pencil skirts"
+        ],
+        "avoid": [
+          "Overly baggy pants that hide your legs",
+          "Pleated or gathered waistbands",
+          "Low-rise styles"
+        ]
+      },
+      {
+        "category": "Dresses",
+        "recommendations": [
+          "Empire waist dresses",
+          "A-line dresses",
+          "Wrap dresses with V-necklines",
+          "Shift dresses that skim the body",
+          "Fit-and-flare styles"
+        ],
+        "avoid": [
+          "Bodycon dresses",
+          "Belted styles at natural waist",
+          "Drop-waist dresses",
+          "Dresses with waist embellishment"
+        ]
+      },
+      {
+        "category": "Jackets & Outerwear",
+        "recommendations": [
+          "Long cardigans that create vertical lines",
+          "Open-front jackets",
+          "Waterfall cardigans",
+          "Structured blazers worn open",
+          "Coats that end below the hip"
+        ],
+        "avoid": [
+          "Cropped jackets that end at waist",
+          "Belted styles that emphasize midsection",
+          "Double-breasted jackets"
+        ]
+      },
+      {
+        "category": "Necklines",
+        "recommendations": [
+          "V-neck (most flattering)",
+          "Deep scoop neck",
+          "Cowl neck",
+          "U-neck",
+          "Surplice necklines"
+        ],
+        "avoid": [
+          "High crew necks",
+          "Turtlenecks",
+          "Boat necks (can add width)"
+        ]
+      },
+      {
+        "category": "Patterns & Fabrics",
+        "recommendations": [
+          "Vertical stripes and patterns",
+          "Darker colors around midsection",
+          "Flowing, draping fabrics",
+          "Structured fabrics for definition"
+        ],
+        "avoid": [
+          "Horizontal stripes across stomach",
+          "Clingy, thin fabrics",
+          "Large prints centered on midsection",
+          "Shiny fabrics around waist"
+        ]
+      }
+    ],
+    "colorTips": [
+      "Darker colors around the midsection create a slimming effect",
+      "Draw attention to your legs with brighter colors on bottoms",
+      "Monochromatic looks create a long, lean line",
+      "Use color to highlight your shoulders and legs"
+    ],
+    "fitTips": [
+      "Create vertical lines to elongate your torso",
+      "Show off your legs - they're a great asset",
+      "Avoid tight waistbands; opt for comfortable fits",
+      "Layer strategically to add dimension"
+    ]
+  },
+  "rectangle": {
+    "name": "Rectangle Shape",
+    "description": "Your body shape has balanced shoulders, waist, and hips with minimal waist definition. You have a straight, athletic silhouette.",
+    "recommendations": [
+      {
+        "category": "Tops",
+        "recommendations": [
+          "Peplum tops to create waist definition",
+          "Belted tops and tunics",
+          "Ruffled or layered styles for dimension",
+          "Crop tops to show waist",
+          "Tops with horizontal details"
+        ],
+        "avoid": [
+          "Straight, boxy cuts that emphasize straightness",
+          "Shapeless tunics without definition"
+        ]
+      },
+      {
+        "category": "Bottoms",
+        "recommendations": [
+          "Low-rise or high-rise jeans (both work)",
+          "Skinny jeans with volume on top",
+          "Wide-leg trousers",
+          "Pleated skirts for volume",
+          "Cargo pants with pockets for dimension"
+        ],
+        "avoid": [
+          "Mid-rise straight cuts that emphasize straightness"
+        ]
+      },
+      {
+        "category": "Dresses",
+        "recommendations": [
+          "Fit-and-flare dresses",
+          "Belted styles to create waist",
+          "Tiered or ruffled dresses",
+          "Bodycon dresses with color blocking",
+          "Wrap dresses"
+        ],
+        "avoid": [
+          "Straight shift dresses without definition",
+          "Column dresses without waist detail"
+        ]
+      },
+      {
+        "category": "Jackets & Outerwear",
+        "recommendations": [
+          "Belted blazers and coats",
+          "Peplum jackets",
+          "Cropped jackets to define waist",
+          "Jackets with waist details",
+          "Structured styles with definition"
+        ],
+        "avoid": [
+          "Long, straight coats without shape",
+          "Boxy blazers"
+        ]
+      },
+      {
+        "category": "Necklines",
+        "recommendations": [
+          "Sweetheart",
+          "Scoop neck",
+          "Boat neck",
+          "Off-shoulder",
+          "Square neck"
+        ],
+        "avoid": [
+          "Plain crew necks without detail"
+        ]
+      },
+      {
+        "category": "Patterns & Fabrics",
+        "recommendations": [
+          "Color blocking to create curves",
+          "Horizontal stripes (you can wear them!)",
+          "Patterns and prints for dimension",
+          "Textured fabrics for interest",
+          "Layered looks"
+        ],
+        "avoid": [
+          "All-over vertical stripes that emphasize straightness",
+          "Monochromatic column looks without breaks"
+        ]
+      }
+    ],
+    "colorTips": [
+      "Use color blocking to create the illusion of curves",
+      "Horizontal stripes work great for your shape",
+      "Mix patterns and textures for visual interest",
+      "Don't be afraid of bold colors and prints"
+    ],
+    "fitTips": [
+      "Create curves with belts, peplums, and ruffles",
+      "Add volume strategically to create shape",
+      "Layer to add dimension to your silhouette",
+      "Experiment with different waist placements"
+    ]
+  },
+  "inverted-triangle": {
+    "name": "Inverted Triangle Shape",
+    "description": "Your body shape features broader shoulders and bust with narrower hips. You have an athletic, strong upper body.",
+    "recommendations": [
+      {
+        "category": "Tops",
+        "recommendations": [
+          "V-neck and deep scoop necks",
+          "Wrap tops",
+          "Dark, solid colors on top",
+          "Vertical details and seams",
+          "Raglan sleeves to soften shoulders"
+        ],
+        "avoid": [
+          "Boat necks and off-shoulder styles",
+          "Shoulder pads or embellishments",
+          "Horizontal stripes on top",
+          "Cap sleeves",
+          "Bright colors and patterns on shoulders"
+        ]
+      },
+      {
+        "category": "Bottoms",
+        "recommendations": [
+          "Wide-leg trousers",
+          "Flared jeans",
+          "A-line skirts",
+          "Pleated or gathered skirts",
+          "Light colors and patterns on bottom",
+          "Pockets and details on hips"
+        ],
+        "avoid": [
+          "Skinny jeans without balance on top",
+          "Dark, plain bottoms with bright tops",
+          "Straight, narrow cuts"
+        ]
+      },
+      {
+        "category": "Dresses",
+        "recommendations": [
+          "A-line dresses",
+          "Fit-and-flare styles",
+          "Dresses with fuller skirts",
+          "Wrap dresses",
+          "Empire waist with volume below"
+        ],
+        "avoid": [
+          "Bodycon dresses",
+          "Strapless styles",
+          "Dresses with shoulder embellishment",
+          "Halter necklines"
+        ]
+      },
+      {
+        "category": "Jackets & Outerwear",
+        "recommendations": [
+          "Single-breasted jackets",
+          "Open-front cardigans",
+          "Jackets that end at hip",
+          "Unstructured, soft shoulders",
+          "Belted styles to define waist"
+        ],
+        "avoid": [
+          "Shoulder pads",
+          "Cropped jackets that end above hip",
+          "Double-breasted styles",
+          "Structured, boxy shoulders"
+        ]
+      },
+      {
+        "category": "Necklines",
+        "recommendations": [
+          "V-neck (most flattering)",
+          "Deep scoop neck",
+          "Sweetheart",
+          "Cowl neck",
+          "U-neck"
+        ],
+        "avoid": [
+          "Boat neck",
+          "Off-shoulder",
+          "Halter",
+          "Square neck",
+          "Strapless"
+        ]
+      },
+      {
+        "category": "Patterns & Fabrics",
+        "recommendations": [
+          "Solid, dark colors on top",
+          "Patterns and prints on bottom",
+          "Vertical details on upper body",
+          "Soft, draping fabrics for tops",
+          "Structured fabrics for bottoms"
+        ],
+        "avoid": [
+          "Horizontal stripes on shoulders",
+          "Shiny or embellished tops",
+          "Stiff, structured fabrics on top",
+          "Large prints on shoulders"
+        ]
+      }
+    ],
+    "colorTips": [
+      "Wear darker colors on top to minimize shoulders",
+      "Choose lighter colors and patterns for bottoms",
+      "Use color to draw attention to your lower body",
+      "Monochromatic looks can balance proportions"
+    ],
+    "fitTips": [
+      "Balance your proportions by adding volume to hips",
+      "Minimize shoulder width with strategic necklines",
+      "Define your waist to create an hourglass effect",
+      "Show off your legs - they're a great feature"
+    ]
+  }
+}

@@ -1,0 +1,448 @@
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
+import { 
+  ArrowLeft, Download, Share2, Star, Copy, CheckCircle, 
+  Sparkles, Shirt, BookOpen, Palette, Home
+} from 'lucide-react';
+
+// Visual guide components
+import { OutfitCardGrid } from '@/features/results/visual-guides/OutfitCardGrid';
+import { SilhouetteCheatsheet } from '@/features/results/visual-guides/SilhouetteCheatsheet';
+import { CapsuleFormulas } from '@/features/results/visual-guides/CapsuleFormulas';
+import { getBodyShapeData, getTopTipsSummary } from '@/features/results/visual-guides';
+
+// Existing components
+import BodyShapeDisplay from '@/components/results/BodyShapeDisplay';
+import { BodyShapeType } from '@/data/stylingGuides';
+import { getStylingGuide } from '@/lib/getStylingGuide';
+
+interface AnalysisResults {
+  shape: BodyShapeType;
+  confidence: number;
+  measurements?: {
+    shoulders: number;
+    bust: number;
+    waist: number;
+    hips: number;
+  };
+  timestamp: string;
+  method: 'camera' | 'manual';
+}
+
+const ResultsPage = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [results, setResults] = useState<AnalysisResults | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    // Check for results in location state or localStorage
+    const stateResults = location.state as AnalysisResults;
+    
+    if (stateResults) {
+      setResults(stateResults);
+      // Also save to localStorage for persistence
+      localStorage.setItem('bodyShapeResults', JSON.stringify(stateResults));
+    } else {
+      // Try to load from localStorage
+      const savedResults = localStorage.getItem('bodyShapeResults');
+      if (savedResults) {
+        setResults(JSON.parse(savedResults));
+      }
+    }
+    
+    setLoading(false);
+  }, [location]);
+
+  const bodyShapeData = results ? getBodyShapeData(results.shape) : null;
+  const stylingGuide = results ? getStylingGuide(results.shape) : null;
+
+  const handleBack = () => navigate('/');
+  const handleNewAnalysis = () => navigate('/method');
+
+  const handleCopySummary = async () => {
+    if (bodyShapeData) {
+      const summary = getTopTipsSummary(bodyShapeData);
+      try {
+        await navigator.clipboard.writeText(summary);
+        setCopied(true);
+        toast.success('Summary copied to clipboard!');
+        setTimeout(() => setCopied(false), 2000);
+      } catch {
+        toast.error('Failed to copy');
+      }
+    }
+  };
+
+  const handleShare = () => {
+    if (results) {
+      const shareText = `I discovered my body shape is ${results.shape} using Colors Code! Get personalized styling recommendations.`;
+      if (navigator.share) {
+        navigator.share({
+          title: 'My Body Shape Analysis',
+          text: shareText,
+          url: window.location.origin,
+        });
+      } else {
+        navigator.clipboard.writeText(shareText);
+        toast.success('Share text copied!');
+      }
+    }
+  };
+
+  const handleDownload = () => {
+    if (results && bodyShapeData) {
+      const content = `
+═══════════════════════════════════════════════════════════════
+              YOUR PERSONALIZED BODY SHAPE ANALYSIS
+                        by Colors Code
+═══════════════════════════════════════════════════════════════
+
+BODY SHAPE: ${bodyShapeData.shapeName}
+CONFIDENCE: ${Math.round(results.confidence * 100)}%
+METHOD: ${results.method === 'camera' ? 'Camera Analysis' : 'Manual Measurements'}
+DATE: ${new Date(results.timestamp).toLocaleDateString()}
+
+───────────────────────────────────────────────────────────────
+                        ABOUT YOUR SHAPE
+───────────────────────────────────────────────────────────────
+
+${bodyShapeData.shapeDescription}
+
+───────────────────────────────────────────────────────────────
+                      KEY STYLING TIPS
+───────────────────────────────────────────────────────────────
+
+${bodyShapeData.keyTips.map((tip, i) => `${i + 1}. ${tip}`).join('\n\n')}
+
+───────────────────────────────────────────────────────────────
+                    YOUR CAPSULE FORMULAS
+───────────────────────────────────────────────────────────────
+
+${bodyShapeData.capsuleFormulas.map(f => 
+  `${f.name} (${f.occasion})\n   ${f.items.map(i => i.name).join(' + ')}\n   Tip: ${f.styling}`
+).join('\n\n')}
+
+───────────────────────────────────────────────────────────────
+
+This is styling guidance, not medical advice.
+All body shapes are beautiful!
+
+Generated by Colors Code - bodyanalysis.colorscode.org
+      `.trim();
+
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `body-shape-guide-${results.shape.toLowerCase()}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success('Guide downloaded!');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+          <p className="text-gray-600">Loading your personalized results...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!results || !bodyShapeData) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 p-4 md:p-8">
+        <div className="max-w-4xl mx-auto">
+          <Button variant="ghost" onClick={handleBack} className="mb-8">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Home
+          </Button>
+
+          <Card className="border-0 shadow-xl">
+            <CardHeader className="text-center">
+              <CardTitle className="text-2xl">No Results Found</CardTitle>
+              <CardDescription>
+                Let's get your personalized styling guide! Choose how you'd like to analyze your body shape.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                <Card className="border shadow-md hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/camera')}>
+                  <CardContent className="pt-6 text-center">
+                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Sparkles className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2">Camera Analysis</h3>
+                    <p className="text-gray-600 text-sm mb-4">Quick AI-powered body shape detection</p>
+                    <Button className="w-full bg-purple-600 hover:bg-purple-700">Start Camera</Button>
+                  </CardContent>
+                </Card>
+                <Card className="border shadow-md hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/questionnaire')}>
+                  <CardContent className="pt-6 text-center">
+                    <div className="w-12 h-12 bg-pink-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <BookOpen className="w-6 h-6 text-pink-600" />
+                    </div>
+                    <h3 className="font-semibold text-lg mb-2">Style Consultation</h3>
+                    <p className="text-gray-600 text-sm mb-4">Answer questions for personalized advice</p>
+                    <Button variant="outline" className="w-full border-pink-600 text-pink-600 hover:bg-pink-50">Start Consultation</Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-purple-50 print:bg-white">
+      {/* Header */}
+      <header className="bg-white/80 backdrop-blur-sm border-b shadow-sm sticky top-0 z-50 print:hidden">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" size="sm" onClick={handleBack}>
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Home
+            </Button>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleCopySummary}>
+                {copied ? <CheckCircle className="mr-2 h-4 w-4 text-green-600" /> : <Copy className="mr-2 h-4 w-4" />}
+                {copied ? 'Copied!' : 'Copy Tips'}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleShare}>
+                <Share2 className="mr-2 h-4 w-4" />
+                Share
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleDownload}>
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </Button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <main className="container mx-auto px-4 py-8 max-w-6xl">
+        {/* Hero Section */}
+        <div className="text-center mb-10">
+          <Badge className="mb-4 bg-purple-100 text-purple-700 hover:bg-purple-100">
+            <Star className="mr-1 h-3 w-3" />
+            {Math.round(results.confidence * 100)}% Confidence
+          </Badge>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent">
+            Your Shape: {bodyShapeData.shapeName}
+          </h1>
+          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            {bodyShapeData.shapeDescription}
+          </p>
+          <p className="text-sm text-gray-400 mt-2">
+            Analyzed via {results.method === 'camera' ? 'Camera' : 'Questionnaire'} • {new Date(results.timestamp).toLocaleDateString()}
+          </p>
+        </div>
+
+        {/* Key Tips Cards */}
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+          {bodyShapeData.keyTips.map((tip, index) => (
+            <Card key={index} className="border-0 shadow-md bg-white">
+              <CardContent className="pt-5">
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 bg-gradient-to-br from-purple-100 to-pink-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-purple-600 font-semibold text-sm">{index + 1}</span>
+                  </div>
+                  <p className="text-sm text-gray-700 leading-relaxed">{tip}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+
+        {/* Silhouette Cheatsheet */}
+        <Card className="border-0 shadow-lg mb-10 overflow-hidden">
+          <CardContent className="pt-6">
+            <SilhouetteCheatsheet 
+              silhouettes={bodyShapeData.silhouettes} 
+              title="Your Best Silhouettes" 
+            />
+          </CardContent>
+        </Card>
+
+        {/* Main Tabs */}
+        <Tabs defaultValue="outfits" className="mb-10">
+          <TabsList className="w-full flex flex-wrap h-auto gap-2 bg-transparent p-0 mb-6">
+            <TabsTrigger 
+              value="outfits" 
+              className="flex-1 min-w-[140px] data-[state=active]:bg-purple-600 data-[state=active]:text-white rounded-full px-6 py-3 border shadow-sm"
+            >
+              <Shirt className="mr-2 h-4 w-4" />
+              Outfit Guide
+            </TabsTrigger>
+            <TabsTrigger 
+              value="formulas" 
+              className="flex-1 min-w-[140px] data-[state=active]:bg-purple-600 data-[state=active]:text-white rounded-full px-6 py-3 border shadow-sm"
+            >
+              <Palette className="mr-2 h-4 w-4" />
+              Capsule Formulas
+            </TabsTrigger>
+            <TabsTrigger 
+              value="details" 
+              className="flex-1 min-w-[140px] data-[state=active]:bg-purple-600 data-[state=active]:text-white rounded-full px-6 py-3 border shadow-sm"
+            >
+              <BookOpen className="mr-2 h-4 w-4" />
+              Full Guide
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="outfits" className="mt-0">
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-purple-600" />
+                  Outfit Visual Examples
+                </CardTitle>
+                <CardDescription>
+                  Curated styles that flatter your {bodyShapeData.shapeName.toLowerCase()} shape. Tap any card for fit details.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <OutfitCardGrid 
+                  outfits={bodyShapeData.outfitCards} 
+                  showCategories={true}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="formulas" className="mt-0">
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Palette className="w-5 h-5 text-purple-600" />
+                  Ready-to-Wear Formulas
+                </CardTitle>
+                <CardDescription>
+                  Complete outfit combinations for different occasions. Mix and match for endless possibilities.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <CapsuleFormulas formulas={bodyShapeData.capsuleFormulas} title="" />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="details" className="mt-0">
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <CardTitle>Complete Styling Guide</CardTitle>
+                <CardDescription>
+                  In-depth recommendations for your {bodyShapeData.shapeName.toLowerCase()} body shape
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-8">
+                {/* Body Shape Visual */}
+                <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6">
+                  <BodyShapeDisplay shape={results.shape} />
+                </div>
+
+                {/* Styling Guide Content */}
+                {stylingGuide && (
+                  <div className="space-y-6">
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3 text-gray-900">Best Silhouettes</h3>
+                      <div className="grid md:grid-cols-2 gap-3">
+                        {stylingGuide.bestSilhouettes.map((silhouette, index) => (
+                          <div key={index} className="bg-purple-50 rounded-lg p-4 border border-purple-100">
+                            <h4 className="font-medium text-gray-900">{silhouette.title}</h4>
+                            <p className="text-sm text-gray-600 mt-1">{silhouette.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <h3 className="font-semibold text-lg mb-3 text-gray-900">Styling Goals</h3>
+                      <div className="space-y-2">
+                        {stylingGuide.stylingGoals.map((goal, index) => (
+                          <div key={index} className="flex items-start gap-3">
+                            <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                            <p className="text-gray-700">{goal}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {results.measurements && (
+                      <>
+                        <Separator />
+                        <div>
+                          <h3 className="font-semibold text-lg mb-3 text-gray-900">Your Measurements</h3>
+                          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                            {Object.entries(results.measurements).map(([key, value]) => (
+                              <div key={key} className="bg-gray-50 rounded-lg p-4 text-center">
+                                <p className="text-xs text-gray-500 uppercase tracking-wider mb-1">
+                                  {key}
+                                </p>
+                                <p className="text-xl font-semibold text-gray-900">{value} cm</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
+        {/* Disclaimer */}
+        <Card className="border-0 bg-gradient-to-r from-purple-50 to-pink-50 shadow-md mb-8">
+          <CardContent className="py-4">
+            <p className="text-sm text-gray-600 text-center">
+              <span className="font-medium">Note:</span> This is styling guidance based on fashion industry principles, not medical advice. 
+              All body shapes are beautiful—these tips help you find styles that make you feel confident!
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Footer Actions */}
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 pt-8 print:hidden">
+          <Button variant="outline" onClick={handleBack} className="w-full sm:w-auto">
+            <Home className="mr-2 h-4 w-4" />
+            Return Home
+          </Button>
+          <Button onClick={handleNewAnalysis} className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700">
+            <Sparkles className="mr-2 h-4 w-4" />
+            New Analysis
+          </Button>
+        </div>
+      </main>
+
+      {/* Print-friendly styles */}
+      <style>{`
+        @media print {
+          .print\\:hidden { display: none !important; }
+          .print\\:bg-white { background: white !important; }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default ResultsPage;

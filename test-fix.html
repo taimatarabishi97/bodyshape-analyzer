@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Supabase Fix Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
+        .success { color: green; font-weight: bold; }
+        .error { color: red; font-weight: bold; }
+        .code { background: #f5f5f5; padding: 10px; border-radius: 5px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>Supabase URL Construction Test</h1>
+    
+    <h2>Problem:</h2>
+    <p>The error <code>Failed to construct 'URL': Invalid URL</code> happens when:</p>
+    <ol>
+        <li><code>VITE_SUPABASE_URL</code> is empty/undefined in production</li>
+        <li>The old code tries: <code>new URL(undefined)</code> which throws</li>
+    </ol>
+    
+    <h2>Solution Applied:</h2>
+    <div class="code">
+// OLD (broken):
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL!;
+
+// NEW (fixed):
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
+const isValidUrl = (url: string): boolean => {
+  try {
+    new URL(url);
+    return true;
+  } catch {
+    return false;
+  }
+};
+    </div>
+    
+    <h2>Action Required:</h2>
+    <p><strong>REDEPLOY on Vercel</strong> to get the fixed code.</p>
+    
+    <h2>Check Environment Variables:</h2>
+    <p>Visit: <code>https://your-app.vercel.app/env-test</code></p>
+    
+    <h2>If Still Broken:</h2>
+    <ol>
+        <li>Check Vercel Environment Variables are set</li>
+        <li>Redeploy</li>
+        <li>Clear browser cache (Ctrl+F5)</li>
+        <li>Try incognito/private window</li>
+    </ol>
+</body>
+</html>
