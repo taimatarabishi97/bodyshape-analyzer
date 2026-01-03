@@ -7,7 +7,7 @@ import { PoseOverlay } from './PoseOverlay';
 import { QualityIndicator } from './QualityIndicator';
 
 interface CameraInterfaceProps {
-  onCapture: (imageData: ImageData) => void;
+  onCapture: (imageData: ImageData, landmarks: any[]) => void;
   onCancel: () => void;
   onSwitchCamera?: () => void;
 }
@@ -153,14 +153,34 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
       
       setCaptureMessage('Processing...');
       
-      // Pass image data to parent - this will trigger analysis
-      onCapture(imageData);
-    } catch (error) {
-      console.error('Capture error:', error);
+      // Get current landmarks from ref
+      const currentLandmarks = landmarksRef.current;
+      
+      if (!currentLandmarks || currentLandmarks.length === 0) {
+        throw new Error('No pose detected. Please ensure your full body is visible.');
+      }
+      
+      // Pass image data AND landmarks to parent
+      onCapture(imageData, currentLandmarks);
+      
+      // Reset capture state after successful capture
       setCaptureMessage(null);
       setIsCapturing(false);
-      // Restart detection if capture failed
-      startPoseDetection();
+    } catch (error: unknown) {
+      console.error('Capture error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Capture failed';
+      setCaptureMessage(`Error: ${errorMessage}`);
+      
+      // Show error briefly then reset
+      setTimeout(() => {
+        setCaptureMessage(null);
+        setIsCapturing(false);
+        // Reset auto-capture so it can try again
+        autoCaptureTriggeredRef.current = false;
+        excellentFrameCountRef.current = 0;
+        // Restart detection
+        startPoseDetection();
+      }, 2000);
     }
   }, [isCapturing, onCapture, stopPoseDetection, startPoseDetection]);
 

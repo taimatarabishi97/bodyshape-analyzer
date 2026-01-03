@@ -52,26 +52,36 @@ function CameraAnalysisContent() {
     }
   };
 
-  const handleCapture = async (imageData: ImageData) => {
+  const handleCapture = async (imageData: ImageData, landmarks?: any[]) => {
     try {
       setIsAnalyzing(true);
       setError(null);
       
+      // Use landmarks passed from CameraInterface, or fall back to state
+      const landmarksToUse = landmarks || state.landmarks;
+      
       // Analyze the captured image
-      if (state.landmarks) {
-        const result = await analyzePose(state.landmarks, imageData);
+      if (landmarksToUse && landmarksToUse.length > 0) {
+        const result = await analyzePose(landmarksToUse, imageData);
         setAnalysisResult(result);
         setCapturedImage(imageData);
         setShowCamera(false);
       } else {
-        throw new Error('No pose landmarks detected');
+        throw new Error('No pose landmarks detected. Please ensure your full body is visible and try again.');
       }
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to analyze pose';
       setError(errorMessage);
+      // Keep camera open so user can retry
+      setShowCamera(true);
     } finally {
       setIsAnalyzing(false);
     }
+  };
+
+  const handleRetryCapture = () => {
+    setError(null);
+    // Camera stays open, user can try again
   };
 
   const handleCancel = () => {
@@ -327,13 +337,33 @@ function CameraAnalysisContent() {
         isLoading={state.status === 'REQUESTING_PERMISSION'}
       />
 
-      {/* Error Alert */}
+      {/* Error Alert with Retry */}
       {error && (
-        <div className="fixed top-4 right-4 z-50 max-w-md">
-          <Alert variant="destructive">
+        <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-md px-4">
+          <Alert variant="destructive" className="shadow-lg">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Error</AlertTitle>
-            <AlertDescription>{error}</AlertDescription>
+            <AlertTitle>Detection Failed</AlertTitle>
+            <AlertDescription className="mt-2">
+              <p className="mb-3">{error}</p>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={handleRetryCapture}
+                  className="bg-white hover:bg-gray-100"
+                >
+                  Try Again
+                </Button>
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={handleCancel}
+                  className="bg-white hover:bg-gray-100"
+                >
+                  Cancel
+                </Button>
+              </div>
+            </AlertDescription>
           </Alert>
         </div>
       )}
