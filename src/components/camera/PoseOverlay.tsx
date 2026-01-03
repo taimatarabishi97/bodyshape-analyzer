@@ -76,12 +76,7 @@ export function PoseOverlay({ landmarks, mirrored = false }: PoseOverlayProps) {
   const toPercent = (value: number) => `${value * 100}%`;
 
   return (
-    <div 
-      className="absolute inset-0 pointer-events-none"
-      style={{
-        transform: mirrored ? 'scaleX(-1)' : 'none'
-      }}
-    >
+    <div className="absolute inset-0 pointer-events-none">
       {/* Draw connections (skeleton) */}
       <svg className="absolute inset-0 w-full h-full">
         {connections.map(([startIdx, endIdx], index) => {
