@@ -20,6 +20,14 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
   const [detectionInterval, setDetectionInterval] = useState<NodeJS.Timeout | null>(null);
   const [poseReady, setPoseReady] = useState(false);
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [autoCapturing, setAutoCapturing] = useState(false);
+  const autoCaptureTriggeredRef = useRef(false);
+  const excellentFrameCountRef = useRef(0);
+  
+  // Auto-capture threshold: 85% quality score
+  const AUTO_CAPTURE_THRESHOLD = 0.85;
+  // Require 5 consecutive excellent frames before auto-capture (1 second at 200ms intervals)
+  const REQUIRED_EXCELLENT_FRAMES = 5;
 
   // Initialize video stream
   useEffect(() => {
@@ -61,8 +69,23 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
           // Check if pose is ready for capture
           if (state.quality && state.quality.overall > 0.7) {
             setPoseReady(true);
+            
+            // Check for excellent quality for auto-capture
+            if (state.quality.overall >= AUTO_CAPTURE_THRESHOLD && !autoCaptureTriggeredRef.current && !autoCapturing) {
+              excellentFrameCountRef.current += 1;
+              
+              // Trigger auto-capture after consecutive excellent frames
+              if (excellentFrameCountRef.current >= REQUIRED_EXCELLENT_FRAMES) {
+                autoCaptureTriggeredRef.current = true;
+                triggerAutoCapture();
+              }
+            } else if (state.quality.overall < AUTO_CAPTURE_THRESHOLD) {
+              // Reset frame count if quality drops
+              excellentFrameCountRef.current = 0;
+            }
           } else {
             setPoseReady(false);
+            excellentFrameCountRef.current = 0;
           }
         } catch (error) {
           console.error('Pose detection error:', error);
@@ -73,6 +96,39 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
     }, 200); // Detect every 200ms
 
     setDetectionInterval(interval);
+  };
+
+  // Auto-capture function - instant capture without countdown
+  const triggerAutoCapture = async () => {
+    if (!videoRef.current || !canvasRef.current) return;
+    
+    setAutoCapturing(true);
+    setCountdown(1); // Brief visual indicator
+    
+    // Brief delay for user feedback
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Capture image
+    const canvas = canvasRef.current;
+    const video = videoRef.current;
+    
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    
+    // Clear canvas
+    context.clearRect(0, 0, canvas.width, canvas.height);
+    
+    setCountdown(null);
+    setAutoCapturing(false);
+    
+    // Pass image data to parent
+    onCapture(imageData);
   };
 
   const stopPoseDetection = () => {
@@ -129,6 +185,10 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
   };
 
   const getStatusMessage = () => {
+    if (autoCapturing) {
+      return 'Auto-capturing...';
+    }
+    
     if (countdown !== null) {
       return `Capturing in ${countdown}...`;
     }
@@ -137,8 +197,14 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
       return 'Detecting pose...';
     }
     
+    // Show progress toward auto-capture
+    if (state.quality && state.quality.overall >= AUTO_CAPTURE_THRESHOLD && !autoCaptureTriggeredRef.current) {
+      const progress = Math.min(excellentFrameCountRef.current, REQUIRED_EXCELLENT_FRAMES);
+      return `Excellent! Hold still... (${progress}/${REQUIRED_EXCELLENT_FRAMES})`;
+    }
+    
     if (poseReady) {
-      return 'Ready to capture!';
+      return 'Great pose! Hold still for auto-capture';
     }
     
     if (state.landmarks && state.landmarks.length > 0) {
@@ -149,8 +215,13 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
   };
 
   const getStatusIcon = () => {
-    if (countdown !== null) {
+    if (autoCapturing || countdown !== null) {
       return <AlertCircle className="w-4 h-4 text-amber-400" />;
+    }
+    
+    // Excellent quality - show special indicator
+    if (state.quality && state.quality.overall >= AUTO_CAPTURE_THRESHOLD && !autoCaptureTriggeredRef.current) {
+      return <CheckCircle className="w-4 h-4 text-green-400 animate-pulse" />;
     }
     
     if (poseReady) {
@@ -274,8 +345,12 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
 
         {/* Ready status */}
         <div className="text-center mt-3">
-          {poseReady ? (
-            <span className="text-green-400 text-sm font-medium">✓ Ready to capture</span>
+          {autoCapturing ? (
+            <span className="text-green-400 text-sm font-medium animate-pulse">✨ Auto-capturing...</span>
+          ) : state.quality && state.quality.overall >= AUTO_CAPTURE_THRESHOLD && !autoCaptureTriggeredRef.current ? (
+            <span className="text-green-400 text-sm font-medium animate-pulse">✨ Excellent! Hold still...</span>
+          ) : poseReady ? (
+            <span className="text-green-400 text-sm font-medium">✓ Ready - hold still for auto-capture</span>
           ) : (
             <span className="text-white/50 text-sm">Position yourself in frame</span>
           )}
