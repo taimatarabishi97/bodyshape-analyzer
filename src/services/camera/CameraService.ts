@@ -143,6 +143,10 @@ export class CameraService {
     return newCameraType;
   }
 
+  getActiveStream(): MediaStream | null {
+    return this.stream;
+  }
+
   getCurrentCamera(): CameraType {
     return this.currentCamera;
   }

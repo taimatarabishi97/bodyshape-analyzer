@@ -175,13 +175,17 @@ export function CameraProvider({ children }: { children: ReactNode }) {
 
   const switchCamera = useCallback(async () => {
     try {
-      dispatch({ type: 'SET_STATUS', payload: 'ACTIVE' });
       dispatch({ type: 'SET_ERROR', payload: null });
 
       const { cameraService } = getServices();
-      const newCameraType = await cameraService.switchCamera();
       
+      // Get the new camera type and stream
+      const newCameraType = await cameraService.switchCamera();
+      const newStream = cameraService.getActiveStream();
+      
+      // Update state with new camera type and stream
       dispatch({ type: 'SET_CAMERA', payload: newCameraType });
+      dispatch({ type: 'SET_STREAM', payload: newStream });
       dispatch({ type: 'SET_STATUS', payload: 'ACTIVE' });
       
     } catch (error: unknown) {
