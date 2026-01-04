@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CameraProvider, useCamera } from '@/contexts/CameraContext';
 import { CameraConsentModal } from '@/components/camera/CameraConsentModal';
-import { CameraInterface } from '@/components/camera/CameraInterface';
+import { CameraInterfaceV2 } from '@/components/camera/CameraInterfaceV2';
 import { ResultsDisplay } from '@/components/camera/ResultsDisplay';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -150,7 +150,7 @@ function CameraAnalysisContent() {
 
     if (showCamera && state.status === 'ACTIVE') {
       return (
-        <CameraInterface
+        <CameraInterfaceV2
           onCapture={handleCapture}
           onCancel={handleCancel}
           onSwitchCamera={switchCamera}
