@@ -98,6 +98,7 @@ function calculateVideoDisplayRect(
 
 /**
  * Map a normalized landmark coordinate (0-1) to canvas pixel coordinates
+ * Returns both raw and transformed coordinates for debugging
  */
 function mapLandmarkToCanvas(
   landmark: { x: number; y: number },
@@ -107,17 +108,16 @@ function mapLandmarkToCanvas(
   isMirrored: boolean,
   objectFit: 'contain' | 'cover',
   dpr: number
-): { x: number; y: number; visible: boolean } {
+): { x: number; y: number; rawX: number; rawY: number; visible: boolean } {
   // Landmark x,y are normalized 0-1 relative to video intrinsic dimensions
+  const rawX = landmark.x;
+  const rawY = landmark.y;
   let { x, y } = landmark;
 
-  // Rotate 90 degrees counter-clockwise: new_x = 1 - y, new_y = x
-  const rotatedX = 1 - y;
-  const rotatedY = x;
-  x = rotatedX;
-  y = rotatedY;
+  // NO rotation - landmarks should be in correct orientation from model
+  // The model outputs coordinates matching the video frame orientation
 
-  // If mirrored display, flip x coordinate to match what user sees
+  // If mirrored display (front camera), flip x coordinate to match what user sees
   if (isMirrored) {
     x = 1 - x;
   }
@@ -148,6 +148,8 @@ function mapLandmarkToCanvas(
   return {
     x: displayX * dpr,
     y: displayY * dpr,
+    rawX,
+    rawY,
     visible
   };
 }
@@ -233,14 +235,25 @@ export function PoseCanvas({
 
     // Debug info
     if (showDebug) {
+      // Get nose landmark for debug display
+      const noseLandmark = landmarks?.[0]; // Nose is index 0 in MoveNet
+      const leftShoulder = landmarks?.[5]; // Left shoulder
+      const rightShoulder = landmarks?.[6]; // Right shoulder
+      
       const info = [
-        `Video: ${videoElement.videoWidth}x${videoElement.videoHeight}`,
+        `Video Native: ${videoElement.videoWidth}x${videoElement.videoHeight}`,
+        `Video Aspect: ${(videoElement.videoWidth / videoElement.videoHeight).toFixed(2)}`,
         `Container: ${containerWidth.toFixed(0)}x${containerHeight.toFixed(0)}`,
+        `Container Aspect: ${(containerWidth / containerHeight).toFixed(2)}`,
         `Canvas: ${canvasWidth}x${canvasHeight} (DPR: ${dpr})`,
-        `VideoRect: x=${videoRect.x.toFixed(1)}, y=${videoRect.y.toFixed(1)}, w=${videoRect.width.toFixed(1)}, h=${videoRect.height.toFixed(1)}`,
-        `ObjectFit: ${objectFit}`,
-        `Mirrored: ${isMirrored}`,
-        `Orientation: ${screen.orientation?.angle || 0}°`,
+        `VideoRect: x=${videoRect.x.toFixed(1)}, y=${videoRect.y.toFixed(1)}`,
+        `VideoRect: w=${videoRect.width.toFixed(1)}, h=${videoRect.height.toFixed(1)}`,
+        `ObjectFit: ${objectFit} | Mirrored: ${isMirrored}`,
+        `Orientation: ${screen.orientation?.angle ?? 'N/A'}°`,
+        `---RAW LANDMARKS---`,
+        noseLandmark ? `Nose: (${noseLandmark.x.toFixed(3)}, ${noseLandmark.y.toFixed(3)})` : 'Nose: N/A',
+        leftShoulder ? `L.Shoulder: (${leftShoulder.x.toFixed(3)}, ${leftShoulder.y.toFixed(3)})` : 'L.Shoulder: N/A',
+        rightShoulder ? `R.Shoulder: (${rightShoulder.x.toFixed(3)}, ${rightShoulder.y.toFixed(3)})` : 'R.Shoulder: N/A',
       ];
       setDebugInfo(info);
 
@@ -255,6 +268,18 @@ export function PoseCanvas({
         videoRect.height * dpr
       );
       ctx.setLineDash([]);
+      
+      // Draw center crosshair
+      const centerX = (videoRect.x + videoRect.width / 2) * dpr;
+      const centerY = (videoRect.y + videoRect.height / 2) * dpr;
+      ctx.strokeStyle = 'rgba(255, 0, 255, 0.8)';
+      ctx.lineWidth = 1 * dpr;
+      ctx.beginPath();
+      ctx.moveTo(centerX - 20 * dpr, centerY);
+      ctx.lineTo(centerX + 20 * dpr, centerY);
+      ctx.moveTo(centerX, centerY - 20 * dpr);
+      ctx.lineTo(centerX, centerY + 20 * dpr);
+      ctx.stroke();
     }
 
     // Draw landmarks
@@ -275,6 +300,33 @@ export function PoseCanvas({
         );
         return { ...mapped, score: lm.score, index: idx };
       });
+
+      // Debug: Draw raw landmark position for nose (red dot) vs transformed (green dot)
+      if (showDebug && landmarks[0] && landmarks[0].score > 0.3) {
+        const nose = landmarks[0];
+        // Raw position (no mirroring)
+        const rawX = (videoRect.x + nose.x * videoRect.width) * dpr;
+        const rawY = (videoRect.y + nose.y * videoRect.height) * dpr;
+        
+        ctx.fillStyle = 'red';
+        ctx.beginPath();
+        ctx.arc(rawX, rawY, 8 * dpr, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = 'white';
+        ctx.font = `${10 * dpr}px sans-serif`;
+        ctx.fillText('RAW', rawX + 10 * dpr, rawY);
+        
+        // Transformed position
+        const mapped = mappedLandmarks[0];
+        if (mapped) {
+          ctx.fillStyle = 'lime';
+          ctx.beginPath();
+          ctx.arc(mapped.x, mapped.y, 8 * dpr, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = 'white';
+          ctx.fillText('MAPPED', mapped.x + 10 * dpr, mapped.y);
+        }
+      }
 
       // Draw skeleton connections
       ctx.lineCap = 'round';
