@@ -329,12 +329,11 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
               top: videoDimensions.offsetY,
               width: videoDimensions.displayWidth,
               height: videoDimensions.displayHeight,
-              transform: state.currentCamera === 'front' ? 'scaleX(-1)' : 'none'
             }}
           >
             <PoseOverlay 
               landmarks={state.landmarks} 
-              mirrored={false}
+              mirrored={state.currentCamera === 'front'}
             />
           </div>
         )}

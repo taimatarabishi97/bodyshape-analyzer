@@ -72,7 +72,8 @@ export function PoseOverlay({ landmarks, mirrored = false }: PoseOverlayProps) {
     return 1;
   };
 
-  // Use raw coordinates - the CSS transform on the overlay container handles mirroring
+  // Mirror X coordinate if needed (for front camera)
+  const getX = (x: number) => mirrored ? 1 - x : x;
   const toPercent = (value: number) => `${value * 100}%`;
 
   return (
@@ -87,9 +88,9 @@ export function PoseOverlay({ landmarks, mirrored = false }: PoseOverlayProps) {
             return null;
           }
 
-          const startX = startLandmark.x * 100;
+          const startX = getX(startLandmark.x) * 100;
           const startY = startLandmark.y * 100;
-          const endX = endLandmark.x * 100;
+          const endX = getX(endLandmark.x) * 100;
           const endY = endLandmark.y * 100;
 
           return (
@@ -122,7 +123,7 @@ export function PoseOverlay({ landmarks, mirrored = false }: PoseOverlayProps) {
               key={`landmark-${index}`}
               className="absolute transform -translate-x-1/2 -translate-y-1/2"
               style={{
-                left: toPercent(landmark.x),
+                left: toPercent(getX(landmark.x)),
                 top: toPercent(landmark.y),
               }}
             >
@@ -157,7 +158,7 @@ export function PoseOverlay({ landmarks, mirrored = false }: PoseOverlayProps) {
        landmarks[LANDMARK_INDICES.LEFT_SHOULDER].score > 0.5 && landmarks[LANDMARK_INDICES.RIGHT_SHOULDER].score > 0.5 && (
         <div className="absolute transform -translate-y-1/2"
           style={{
-            left: toPercent(Math.min(landmarks[LANDMARK_INDICES.LEFT_SHOULDER].x, landmarks[LANDMARK_INDICES.RIGHT_SHOULDER].x)),
+            left: toPercent(Math.min(getX(landmarks[LANDMARK_INDICES.LEFT_SHOULDER].x), getX(landmarks[LANDMARK_INDICES.RIGHT_SHOULDER].x))),
             top: toPercent(landmarks[LANDMARK_INDICES.LEFT_SHOULDER].y),
             width: toPercent(Math.abs(landmarks[LANDMARK_INDICES.RIGHT_SHOULDER].x - landmarks[LANDMARK_INDICES.LEFT_SHOULDER].x)),
           }}
@@ -176,7 +177,7 @@ export function PoseOverlay({ landmarks, mirrored = false }: PoseOverlayProps) {
        landmarks[LANDMARK_INDICES.LEFT_HIP].score > 0.5 && landmarks[LANDMARK_INDICES.RIGHT_HIP].score > 0.5 && (
         <div className="absolute transform -translate-y-1/2"
           style={{
-            left: toPercent(Math.min(landmarks[LANDMARK_INDICES.LEFT_HIP].x, landmarks[LANDMARK_INDICES.RIGHT_HIP].x)),
+            left: toPercent(Math.min(getX(landmarks[LANDMARK_INDICES.LEFT_HIP].x), getX(landmarks[LANDMARK_INDICES.RIGHT_HIP].x))),
             top: toPercent(landmarks[LANDMARK_INDICES.LEFT_HIP].y),
             width: toPercent(Math.abs(landmarks[LANDMARK_INDICES.RIGHT_HIP].x - landmarks[LANDMARK_INDICES.LEFT_HIP].x)),
           }}
