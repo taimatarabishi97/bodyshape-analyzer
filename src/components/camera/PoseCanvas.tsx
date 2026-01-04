@@ -111,9 +111,9 @@ function mapLandmarkToCanvas(
   // Landmark x,y are normalized 0-1 relative to video intrinsic dimensions
   let { x, y } = landmark;
 
-  // Rotate 180 degrees: new_x = 1 - x, new_y = 1 - y
-  const rotatedX = 1 - x;
-  const rotatedY = 1 - y;
+  // Rotate 90 degrees counter-clockwise: new_x = 1 - y, new_y = x
+  const rotatedX = 1 - y;
+  const rotatedY = x;
   x = rotatedX;
   y = rotatedY;
 
