@@ -12,14 +12,45 @@ interface CameraInterfaceProps {
   onSwitchCamera?: () => void;
 }
 
+// Calculate the actual display dimensions of video with object-contain
+function getVideoDisplayDimensions(video: HTMLVideoElement, container: HTMLElement) {
+  const videoRatio = video.videoWidth / video.videoHeight;
+  const containerRatio = container.clientWidth / container.clientHeight;
+  
+  let displayWidth, displayHeight, offsetX, offsetY;
+  
+  if (videoRatio > containerRatio) {
+    // Video is wider than container - letterbox top/bottom
+    displayWidth = container.clientWidth;
+    displayHeight = container.clientWidth / videoRatio;
+    offsetX = 0;
+    offsetY = (container.clientHeight - displayHeight) / 2;
+  } else {
+    // Video is taller than container - letterbox left/right
+    displayHeight = container.clientHeight;
+    displayWidth = container.clientHeight * videoRatio;
+    offsetX = (container.clientWidth - displayWidth) / 2;
+    offsetY = 0;
+  }
+  
+  return { displayWidth, displayHeight, offsetX, offsetY };
+}
+
 export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraInterfaceProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { state, detectPose, stopCamera } = useCamera();
   const [isDetecting, setIsDetecting] = useState(false);
   const [poseReady, setPoseReady] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
   const [captureMessage, setCaptureMessage] = useState<string | null>(null);
+  const [videoDimensions, setVideoDimensions] = useState<{
+    displayWidth: number;
+    displayHeight: number;
+    offsetX: number;
+    offsetY: number;
+  } | null>(null);
   const detectionIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const autoCaptureTriggeredRef = useRef(false);
   const excellentFrameCountRef = useRef(0);
@@ -40,12 +71,36 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
     landmarksRef.current = state.landmarks;
   }, [state.landmarks]);
 
+  // Calculate video display dimensions when video loads or resizes
+  const updateVideoDimensions = useCallback(() => {
+    if (videoRef.current && containerRef.current && videoRef.current.videoWidth > 0) {
+      const dims = getVideoDisplayDimensions(videoRef.current, containerRef.current);
+      setVideoDimensions(dims);
+    }
+  }, []);
+
   // Initialize video stream
   useEffect(() => {
     if (state.stream && videoRef.current) {
       videoRef.current.srcObject = state.stream;
+      
+      // Update dimensions when video metadata loads
+      const handleLoadedMetadata = () => {
+        updateVideoDimensions();
+      };
+      
+      videoRef.current.addEventListener('loadedmetadata', handleLoadedMetadata);
+      
+      // Also update on resize
+      const handleResize = () => updateVideoDimensions();
+      window.addEventListener('resize', handleResize);
+      
+      return () => {
+        videoRef.current?.removeEventListener('loadedmetadata', handleLoadedMetadata);
+        window.removeEventListener('resize', handleResize);
+      };
     }
-  }, [state.stream]);
+  }, [state.stream, updateVideoDimensions]);
 
   // Start pose detection when camera is active
   useEffect(() => {
@@ -74,6 +129,10 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
     const interval = setInterval(async () => {
       if (videoRef.current && videoRef.current.readyState === 4 && !isCapturing) {
         setIsDetecting(true);
+        
+        // Update video dimensions on each detection cycle
+        updateVideoDimensions();
+        
         try {
           await detectPose(videoRef.current);
           
@@ -247,24 +306,29 @@ export function CameraInterface({ onCapture, onCancel, onSwitchCamera }: CameraI
   return (
     <div className="fixed inset-0 bg-black flex flex-col">
       {/* Camera preview - full screen on mobile */}
-      <div className="relative flex-1 w-full overflow-hidden bg-black">
-        {/* Video element - object-contain ensures coordinates match */}
+      <div ref={containerRef} className="relative flex-1 w-full overflow-hidden bg-black">
+        {/* Video element */}
         <video
           ref={videoRef}
           autoPlay
           playsInline
           muted
+          onLoadedMetadata={updateVideoDimensions}
           className="absolute inset-0 w-full h-full object-contain"
           style={{
             transform: state.currentCamera === 'front' ? 'scaleX(-1)' : 'none'
           }}
         />
         
-        {/* Pose overlay - same positioning as video */}
-        {state.landmarks && state.landmarks.length > 0 && (
+        {/* Pose overlay - positioned exactly over the video display area */}
+        {state.landmarks && state.landmarks.length > 0 && videoDimensions && (
           <div 
-            className="absolute inset-0 w-full h-full"
+            className="absolute pointer-events-none"
             style={{
+              left: videoDimensions.offsetX,
+              top: videoDimensions.offsetY,
+              width: videoDimensions.displayWidth,
+              height: videoDimensions.displayHeight,
               transform: state.currentCamera === 'front' ? 'scaleX(-1)' : 'none'
             }}
           >
