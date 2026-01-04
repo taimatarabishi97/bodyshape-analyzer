@@ -2,13 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CameraProvider, useCamera } from '@/contexts/CameraContext';
 import { CameraConsentModal } from '@/components/camera/CameraConsentModal';
-import { CameraInterfaceV2 } from '@/components/camera/CameraInterfaceV2';
-import { ResultsDisplay } from '@/components/camera/ResultsDisplay';
+import { HybridCameraInterface } from '@/components/camera/HybridCameraInterface';
+import { HybridResultsDisplay } from '@/components/camera/HybridResultsDisplay';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Camera, AlertCircle, ArrowLeft, CheckCircle } from 'lucide-react';
-import { BodyShapeResult } from '@/types/camera';
+import { BodyShapeResult, BodyShapeType } from '@/types/camera';
+import { HybridAnalysisResult } from '@/lib/analysis/HybridBodyAnalyzer';
 
 // Main component that uses camera context
 function CameraAnalysisContent() {
@@ -18,7 +19,7 @@ function CameraAnalysisContent() {
   const [showConsent, setShowConsent] = useState(true);
   const [showCamera, setShowCamera] = useState(false);
   const [capturedImage, setCapturedImage] = useState<ImageData | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<BodyShapeResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<HybridAnalysisResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,18 +53,66 @@ function CameraAnalysisContent() {
     }
   };
 
-  const handleCapture = async (imageData: ImageData, landmarks?: any[]) => {
+  const handleCapture = async (imageData: ImageData, landmarks?: any[], hybridResult?: HybridAnalysisResult) => {
     try {
       setIsAnalyzing(true);
       setError(null);
       
-      // Use landmarks passed from CameraInterface, or fall back to state
+      // If we have a hybrid result from the camera interface, use it directly
+      if (hybridResult) {
+        setAnalysisResult(hybridResult);
+        setCapturedImage(imageData);
+        setShowCamera(false);
+        return;
+      }
+      
+      // Fallback: Use landmarks passed from CameraInterface, or fall back to state
       const landmarksToUse = landmarks || state.landmarks;
       
       // Analyze the captured image
       if (landmarksToUse && landmarksToUse.length > 0) {
         const result = await analyzePose(landmarksToUse, imageData);
-        setAnalysisResult(result);
+        // Convert to HybridAnalysisResult format
+        const hybridFormatResult: HybridAnalysisResult = {
+          bodyShape: result.shape,
+          confidence: result.confidence,
+          measurements: {
+            shoulderWidthPx: result.measurements.shoulderWidth,
+            bustWidthPx: null,
+            waistWidthPx: result.measurements.waistCircumference,
+            hipWidthPx: result.measurements.hipWidth,
+            shoulderWidthNorm: 0,
+            bustWidthNorm: null,
+            waistWidthNorm: 0,
+            hipWidthNorm: 0,
+          },
+          ratios: {
+            WHR: result.ratios.waistToHip,
+            WSR: result.ratios.shoulderToWaist,
+            SHR: result.ratios.shoulderToHip,
+          },
+          waistCurvatureIndex: 0.1,
+          quality: {
+            overall: result.quality.overall,
+            poseConfidence: result.quality.landmarks,
+            segmentationConfidence: 0,
+            measurementConfidence: 0.5,
+            orientationScore: result.quality.stability,
+          },
+          poseCheck: {
+            isFullBodyVisible: true,
+            isUpright: true,
+            yawAngle: 0,
+            rollAngle: 0,
+            isAtGoodDistance: true,
+            frameFillRatio: result.quality.framing,
+            issues: [],
+          },
+          silhouetteWidths: null,
+          landmarks: landmarksToUse,
+          explanation: 'Analyzed using pose landmarks (fallback mode)',
+        };
+        setAnalysisResult(hybridFormatResult);
         setCapturedImage(imageData);
         setShowCamera(false);
       } else {
@@ -98,7 +147,7 @@ function CameraAnalysisContent() {
     setError(null);
   };
 
-  const handleUseResult = (result: BodyShapeResult) => {
+  const handleUseResult = (result: HybridAnalysisResult) => {
     // Get questionnaire preferences from sessionStorage
     const storedAnswers = sessionStorage.getItem('questionnaireAnswers');
     const storedNotes = sessionStorage.getItem('questionnaireNotes');
@@ -120,9 +169,20 @@ function CameraAnalysisContent() {
 
     // Navigate to results page with the analysis result
     const resultsData = {
-      shape: result.shape,
+      shape: result.userOverride || result.bodyShape,
       confidence: result.confidence,
-      measurements: result.measurements,
+      measurements: {
+        shoulderWidth: result.measurements.shoulderWidthPx,
+        waistCircumference: result.measurements.waistWidthPx || 0,
+        hipWidth: result.measurements.hipWidthPx,
+        height: 0,
+      },
+      ratios: {
+        shoulderToHip: result.ratios.SHR,
+        waistToHip: result.ratios.WHR,
+        shoulderToWaist: result.ratios.WSR,
+      },
+      hybridResult: result, // Pass the full hybrid result
       timestamp: new Date().toISOString(),
       method: 'camera' as const,
       stylePreferences,
@@ -136,21 +196,31 @@ function CameraAnalysisContent() {
     navigate('/results', { state: resultsData });
   };
 
+  const handleOverride = (newShape: BodyShapeType) => {
+    if (analysisResult) {
+      setAnalysisResult({
+        ...analysisResult,
+        userOverride: newShape,
+      });
+    }
+  };
+
   // Render based on current state
   const renderContent = () => {
     if (analysisResult) {
       return (
-        <ResultsDisplay
+        <HybridResultsDisplay
           result={analysisResult}
           onRetry={handleRetry}
           onUseResult={handleUseResult}
+          onOverride={handleOverride}
         />
       );
     }
 
     if (showCamera && state.status === 'ACTIVE') {
       return (
-        <CameraInterfaceV2
+        <HybridCameraInterface
           onCapture={handleCapture}
           onCancel={handleCancel}
           onSwitchCamera={switchCamera}

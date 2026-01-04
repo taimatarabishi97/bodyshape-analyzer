@@ -87,6 +87,8 @@ export interface CameraContextValue {
   capture: () => Promise<BodyShapeResult>;
   switchCamera: () => Promise<void>;
   reset: () => void;
+  detectPose: (videoElement: HTMLVideoElement) => Promise<PoseLandmark[]>;
+  analyzePose: (landmarks: PoseLandmark[], imageData?: ImageData) => Promise<BodyShapeResult>;
 }
 
 // Configuration types
